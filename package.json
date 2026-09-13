@@ -10,7 +10,8 @@
     "seed": "tsx scripts/seed.ts",
     "eval": "tsx evals/run.ts",
     "demo": "tsx scripts/demo.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "preflight": "tsx scripts/preflight.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.53",

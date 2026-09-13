@@ -226,9 +226,9 @@ Fill in `.env.local`:
 | `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) | 1 min |
 | `STRIPE_SECRET_KEY` | Stripe dashboard → Developers → API keys → **test mode** | 1 min |
 | `LINEAR_API_KEY` | Linear → Settings → Security & access → Personal API keys | 1 min |
-| `NOTION_API_KEY` + `NOTION_PARENT_PAGE_ID` | [notion.so/my-integrations](https://www.notion.so/my-integrations), then **share a page with the integration**. The page id is the 32-char hex in its URL. | 3 min |
+| `NOTION_API_KEY` + `NOTION_PARENT_PAGE_ID` | [notion.so/my-integrations](https://www.notion.so/my-integrations) → New integration → Internal → **Configuration** tab → copy the Internal Integration Secret (`ntn_…`). Then open the page Keel should write into → **•••** → **Connections** → add the integration. Sharing the *workspace* is not enough; the page itself must be connected. The page id is the 32-char hex at the end of its URL. | 3 min |
 | `RESEND_API_KEY` | [resend.com](https://resend.com) → API keys | 1 min |
-| `SLACK_BOT_TOKEN` + `SLACK_CHANNEL_ID` | [api.slack.com/apps](https://api.slack.com/apps) → create app → OAuth & Permissions → add **`chat:write`** bot scope → install to workspace → copy `xoxb-…`. Then `/invite @Keel` in the channel and copy its id from the channel's URL. | 5 min |
+| `SLACK_BOT_TOKEN` + `SLACK_CHANNEL_ID` | [api.slack.com/apps](https://api.slack.com/apps) → create app → **OAuth & Permissions** (left sidebar, under *Features* — not the credentials on Basic Information) → Bot Token Scopes → add **`chat:write`** → Install to Workspace → copy the **Bot User OAuth Token** (`xoxb-…`). Then `/invite @Keel` in the channel, and copy the channel id from the bottom of its **About** tab. | 5 min |
 
 > **`RESEND_TO_OVERRIDE` is a safety valve, not a workaround.** With it set, every customer email is
 > redirected to that address, the intended recipient is preserved in the subject and an
@@ -236,6 +236,18 @@ Fill in `.env.local`:
 > domain Resend only delivers to your own address anyway — but this is the posture we would ship
 > with in any non-production environment regardless, and it is why the demo can run against
 > realistic accounts with zero chance of mailing a real person.
+
+Confirm each app is actually reachable before running anything:
+
+```bash
+pnpm preflight
+```
+
+One read-only call per connector. It distinguishes the failures that look
+identical from the outside — a rejected token, a bot that was never invited to the
+channel, a Notion page shared with the workspace but not with the integration — and
+prints the fix. No secret is ever printed. It exits non-zero below three reachable
+apps, which is the hackathon's minimum.
 
 Then seed the external apps and run:
 
