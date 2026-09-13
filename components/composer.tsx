@@ -165,7 +165,6 @@ export default function Composer({
               menuOpen && "bg-hover text-ink")}>
             <Glyph d="M12 5v14M5 12h14" size={16} strokeWidth={2} />
           </button>
-          <span className="ml-1 font-mono text-[10.5px] text-ink-3">claude-opus-5</span>
           <span className="ml-auto hidden items-center gap-1 font-mono text-[10px] text-ink-3 sm:flex">
             <kbd className="rounded-[4px] bg-inset px-1 py-px shadow-hairline">@</kbd> account
             <kbd className="ml-1 rounded-[4px] bg-inset px-1 py-px shadow-hairline">/</kbd> command

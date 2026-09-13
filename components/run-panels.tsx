@@ -186,40 +186,63 @@ export function Spark({ series }: { series: number[] }) {
 export function AccountCard({ a, active, onClick }: { a: AccountRow; active: boolean; onClick: () => void }) {
   const tone = a.riskScore >= 70 ? "red" : a.riskScore >= 40 ? "amber" : "green";
   const dnc = a.tags.includes("do-not-contact");
+
+  /* One line, in the order a person would ask: how bad, how soon, how much.
+     The old card stacked three rows of monospace figures and read like a
+     terminal dump — the number you actually act on was the hardest to find. */
+  const line = [
+    `usage ${pct(a.usage.changePct)}`,
+    `renews in ${a.daysToRenewal}d`,
+    `${money(a.mrrCents)}/mo`,
+  ].join("  ·  ");
+
   return (
-    <button type="button" onClick={onClick}
+    <button
+      type="button"
+      onClick={onClick}
       className={cn(
-        "w-full rounded-card p-2.5 text-left transition-colors duration-150",
+        "flex w-full items-center gap-2.5 rounded-[10px] px-2 py-2 text-left transition-colors duration-150",
         active ? "bg-surface shadow-card" : "hover:bg-hover-2",
-      )}>
-      <div className="flex items-center gap-2">
-        <span className={cn("size-1.5 shrink-0 rounded-full", tone === "red" ? "bg-red" : tone === "amber" ? "bg-amber" : "bg-green")} />
-        <span className="min-w-0 flex-1 truncate text-[12.5px] font-medium text-ink">{a.name}</span>
-        {/* A bare "92" means nothing to someone seeing this for the first time. */}
-        <span className={cn("shrink-0 font-mono text-[10.5px] tabular-nums",
-          tone === "red" ? "text-red" : tone === "amber" ? "text-amber" : "text-ink-3")}>
-          <span className="opacity-70">risk </span>{a.riskScore}
-        </span>
-      </div>
-      <div className="mt-1.5 flex items-baseline gap-2">
-        <span className="font-mono text-[10.5px] text-ink-2 tabular-nums">{money(a.mrrCents)}<span className="text-ink-3">/mo</span></span>
-        <span className="font-mono text-[10.5px] text-ink-3 tabular-nums">renews in {a.daysToRenewal}d</span>
-      </div>
-      <div className="mt-1 flex items-center gap-2">
-        <span className={cn("font-mono text-[10.5px] tabular-nums", a.usage.changePct < 0 ? "text-red" : "text-green")}>
-          <span className="text-ink-3">usage </span>{pct(a.usage.changePct)}
-        </span>
-        <span className="ml-auto"><Spark series={a.usage.series} /></span>
-      </div>
-      {(dnc || a.failedPaymentCents) && (
-        <div className="mt-1.5 flex flex-wrap gap-1">
-          {dnc && <Tag tone="red">do-not-contact</Tag>}
-          {a.failedPaymentCents ? <Tag tone="amber">payment failed</Tag> : null}
-        </div>
       )}
+    >
+      <span
+        className={cn(
+          "flex size-7 shrink-0 items-center justify-center rounded-full text-[11.5px] font-semibold",
+          tone === "red" ? "bg-red-tint text-red" : tone === "amber" ? "bg-amber-tint text-amber" : "bg-green-tint text-green",
+        )}
+      >
+        {a.name.slice(0, 1)}
+      </span>
+
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center gap-1.5">
+          <span className="truncate text-[12.5px] font-medium text-ink">{a.name}</span>
+          {dnc && (
+            <span className="shrink-0 rounded-[4px] bg-red-tint px-1 text-[9.5px] font-medium text-red">
+              suppressed
+            </span>
+          )}
+          {!dnc && a.failedPaymentCents ? (
+            <span className="shrink-0 rounded-[4px] bg-amber-tint px-1 text-[9.5px] font-medium text-amber">
+              payment failed
+            </span>
+          ) : null}
+        </span>
+        <span className="mt-0.5 block truncate text-[11px] text-ink-3 tabular-nums">{line}</span>
+      </span>
+
+      <span
+        className={cn(
+          "shrink-0 rounded-full px-1.5 py-0.5 text-[11.5px] font-semibold tabular-nums",
+          tone === "red" ? "bg-red-tint text-red" : tone === "amber" ? "bg-amber-tint text-amber" : "bg-inset text-ink-3",
+        )}
+      >
+        {a.riskScore}
+      </span>
     </button>
   );
 }
+
 
 function Tag({ tone, children }: { tone: "red" | "amber"; children: React.ReactNode }) {
   return (

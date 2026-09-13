@@ -27,7 +27,7 @@ export function RiskMeter({ score, reasons }: { score: number; reasons: string[]
   return (
     <div>
       <div className="flex items-baseline gap-2">
-        <span className="font-mono text-[30px] leading-none font-medium tracking-[-0.03em] text-ink tabular-nums">
+        <span className="text-[34px] leading-none font-semibold tracking-[-0.04em] text-ink tabular-nums">
           {score}
         </span>
         <span className="font-mono text-[12px] text-ink-3">/100</span>
@@ -64,7 +64,7 @@ export function StatTile({ label, value, sub, tone }: {
   return (
     <div className="min-w-0 rounded-[10px] bg-inset px-3 py-2.5">
       <p className="text-[10px] font-semibold tracking-[0.05em] text-ink-3 uppercase">{label}</p>
-      <p className={cn("mt-1 font-mono text-[19px] leading-none font-medium tracking-[-0.02em] tabular-nums",
+      <p className={cn("mt-1 text-[21px] leading-none font-semibold tracking-[-0.03em] tabular-nums",
         tone === "red" ? "text-red" : tone === "amber" ? "text-amber" : tone === "green" ? "text-green" : "text-ink")}>
         {value}
       </p>
@@ -329,7 +329,7 @@ export function Receipts({ actions, seconds }: { actions: ExecutedAction[]; seco
           headline.cls === "text-green" ? "bg-green-tint" : headline.cls === "text-red" ? "bg-red-tint" : "bg-inset", headline.cls)}>
           <Glyph d={headline.icon} size={12} strokeWidth={2.8} />
         </span>
-        <span className={cn("font-mono text-[17px] leading-none font-medium tabular-nums", headline.cls)}>{headline.n}</span>
+        <span className={cn("text-[19px] leading-none font-semibold tracking-[-0.02em] tabular-nums", headline.cls)}>{headline.n}</span>
         <span className="text-[12.5px] text-ink-2">{headline.label}</span>
         {failed.length > 0 && (
           <span className="ml-1 inline-flex h-5 items-center rounded-full bg-red-tint px-2 text-[11px] font-medium text-red">

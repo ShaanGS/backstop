@@ -211,7 +211,7 @@ export default function Landing() {
         <div className="mt-12 grid gap-px border border-line bg-line sm:grid-cols-3">
           {STEPS.map((s) => (
             <div key={s.n} className="bg-surface p-6">
-              <p className="font-mono text-[26px] leading-none font-medium text-accent tabular-nums">{s.n}</p>
+              <p className="text-[28px] leading-none font-semibold tracking-[-0.03em] text-accent tabular-nums">{s.n}</p>
               <h3 className="mt-6 text-[16px] font-semibold tracking-[-0.01em] text-ink">{s.title}</h3>
               <p className="mt-2 text-[13.5px] leading-[1.6] text-ink-2">{s.body}</p>
             </div>
@@ -275,7 +275,7 @@ export default function Landing() {
               { n: "0", l: "duplicate actions on replay", t: "text-ink" },
             ].map((k) => (
               <div key={k.l} className="bg-surface p-6">
-                <p className={`font-mono text-[30px] leading-none font-medium tabular-nums ${k.t}`}>{k.n}</p>
+                <p className={`text-[34px] leading-none font-semibold tracking-[-0.04em] tabular-nums ${k.t}`}>{k.n}</p>
                 <p className="mt-2.5 text-[12.5px] leading-snug text-ink-2">{k.l}</p>
               </div>
             ))}

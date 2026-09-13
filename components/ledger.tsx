@@ -31,7 +31,7 @@ function Stat({
     tone === "green" ? "text-green" : tone === "red" ? "text-red" : tone === "amber" ? "text-amber" : "text-ink";
   return (
     <div className="rounded-card bg-surface px-3.5 py-3 shadow-card">
-      <p className={cn("font-mono text-[22px] leading-none font-medium tabular-nums", color)}>{n}</p>
+      <p className={cn("text-[25px] leading-none font-semibold tracking-[-0.035em] tabular-nums", color)}>{n}</p>
       <p className="mt-1.5 text-[11px] font-medium tracking-[0.04em] text-ink-2 uppercase">{label}</p>
       {sub && <p className="mt-0.5 text-[11px] leading-snug text-ink-3">{sub}</p>}
     </div>
