@@ -6,12 +6,12 @@
     "dev": "next dev -p 3100",
     "build": "next build",
     "start": "next start -p 3100",
-    "lint": "eslint",
-    "seed": "tsx scripts/seed.ts",
-    "eval": "tsx evals/run.ts",
-    "demo": "tsx scripts/demo.ts",
     "typecheck": "tsc --noEmit",
-    "preflight": "tsx scripts/preflight.ts"
+    "lint": "eslint",
+    "eval": "tsx evals/run.ts",
+    "preflight": "tsx scripts/preflight.ts",
+    "seed": "tsx scripts/seed.ts",
+    "clean": "tsx scripts/clean.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.53",
