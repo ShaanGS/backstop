@@ -1,0 +1,19 @@
+{
+  "c4d0c93a8b71d63734c17b59e5327f10": {
+    "key": "c4d0c93a8b71d63734c17b59e5327f10",
+    "accountId": "acc_acme",
+    "actionType": "create_linear_issue",
+    "planId": "plan_mu09iqx1206k",
+    "externalId": "db651a49-349e-43e5-b9ba-159dc25a9fb8",
+    "externalUrl": "https://linear.app/marlloz/issue/MAR-19/acme-robotics-acme-robotics-save-play-escalate-mar-5-sso-loop-recover",
+    "executedAt": "2026-09-13T20:25:21.995Z"
+  },
+  "7d3ba3d10745b08634315eb4924fa95b": {
+    "key": "7d3ba3d10745b08634315eb4924fa95b",
+    "accountId": "acc_acme",
+    "actionType": "send_customer_email",
+    "planId": "plan_mu09iqx1206k",
+    "externalId": "169ccbc1-c52c-40e4-84e4-4761e93c0ed4",
+    "executedAt": "2026-09-13T20:25:23.075Z"
+  }
+}

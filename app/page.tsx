@@ -6,7 +6,8 @@ import AgentProse from "@/components/agent-prose";
 import Composer, { type MentionAccount } from "@/components/composer";
 import { AccountCard, ApprovalGate, PolicyPanel, type AccountRow } from "@/components/run-panels";
 import CaseFile, { Receipts } from "@/components/case-file";
-import { AccountSkeleton, ConnectorRow, ToolTrace } from "@/components/states";
+import { AccountSkeleton, ConnectorRow } from "@/components/states";
+import { ToolCard, ToolLog } from "@/components/agents/tool-card";
 import LoadingState from "@/components/loading-state";
 import { Glyph, PATHS } from "@/components/icons";
 import { Wordmark } from "@/components/brand";
@@ -22,7 +23,7 @@ type Turn = {
   instruction: string;
   phase: Phase;
   reasoning: string;
-  tools: { id: string; name: string; summary?: string }[];
+  tools: { id: string; name: string; summary?: string; details?: string[] }[];
   plan: Plan | null;
   snapshot: SnapshotDTO | null;
   evidence: SnapshotDTO["evidence"];
@@ -107,7 +108,7 @@ export default function Console() {
       case "evidence": patch((t) => ({ ...t, evidence: [...t.evidence, ...e.items] })); break;
       case "tool_call": patch((t) => ({ ...t, tools: [...t.tools, { id: e.id, name: e.name }] })); break;
       case "tool_result":
-        patch((t) => ({ ...t, tools: t.tools.map((c) => (c.id === e.id ? { ...c, summary: e.summary } : c)) })); break;
+        patch((t) => ({ ...t, tools: t.tools.map((c) => (c.id === e.id ? { ...c, summary: e.summary, details: e.details } : c)) })); break;
       case "plan":
         patch((t) => ({ ...t, plan: e.plan, snapshot: e.snapshot, rows: e.plan.actions.map((action) => ({ action, status: "pending" as const })) })); break;
       case "policy": patch((t) => ({ ...t, decisions: e.decisions })); break;
@@ -317,7 +318,37 @@ function TurnView({ t, onDecide, onReplay, isLast }: {
           </button>
           <div className="grid transition-[grid-template-rows,opacity] duration-300"
             style={{ gridTemplateRows: showTrace || thinking ? "1fr" : "0fr", opacity: showTrace || thinking ? 1 : 0, transitionTimingFunction: "cubic-bezier(0.23,1,0.32,1)" }}>
-            <div className="overflow-hidden"><div className="pt-1.5"><ToolTrace calls={t.tools} /></div></div>
+            <div className="overflow-hidden">
+              <div className="pt-1.5">
+                <ToolLog>
+                  {t.tools.map((c) => {
+                    const [name, subject] = (c.summary ?? "").includes("·") && c.name === "get_account_snapshot"
+                      ? [c.name, (c.summary ?? "").split("·")[0].trim()]
+                      : [c.name, undefined];
+                    const meta = c.summary
+                      ? c.name === "get_account_snapshot" ? (c.summary.split("·").slice(1).join("·").trim() || undefined) : c.summary
+                      : undefined;
+                    return (
+                      <ToolCard key={c.id} tool={name} title={subject} meta={meta}
+                        status={c.summary ? "success" : "running"}
+                        collapseOnComplete
+                        defaultOpen={!c.summary}>
+                        {c.details?.length ? (
+                          <ul className="flex flex-col gap-1">
+                            {c.details.map((d, i) => (
+                              <li key={i} className="flex gap-2 text-[11.5px] leading-snug text-ink-2">
+                                <span className="mt-1.5 size-1 shrink-0 rounded-full bg-line-strong" />
+                                <span className="min-w-0">{d}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : null}
+                      </ToolCard>
+                    );
+                  })}
+                </ToolLog>
+              </div>
+            </div>
           </div>
         </div>
       )}

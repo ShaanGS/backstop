@@ -25,7 +25,7 @@ export type AgentEvent =
   | { type: "thinking_delta"; text: string }
   | { type: "evidence"; items: AccountSnapshot["evidence"] }
   | { type: "tool_call"; id: string; name: string; args: unknown }
-  | { type: "tool_result"; id: string; name: string; summary: string }
+  | { type: "tool_result"; id: string; name: string; summary: string; details?: string[] }
   | { type: "plan"; plan: Plan; snapshot: SnapshotDTO }
   | { type: "policy"; decisions: PolicyDecision[] }
   | { type: "awaiting_approval"; planId: string; rule: string; reason: string; actions: ProposedAction[] }
@@ -154,12 +154,32 @@ export async function investigate(
     } else if (part.type === "tool-result") {
       const out = part.output as Record<string, unknown>;
       let summary = "ok";
-      if (part.toolName === "list_accounts") summary = `${(out.accounts as unknown[])?.length ?? 0} accounts`;
-      else if (part.toolName === "get_account_snapshot") {
+      let details: string[] | undefined;
+
+      if (part.toolName === "list_accounts") {
+        const rows = (out.accounts ?? []) as { name: string; usageChangePct: number; tags: string[] }[];
+        summary = `${rows.length} accounts`;
+        details = rows.map((a) => `${a.name} — usage ${a.usageChangePct > 0 ? "+" : ""}${a.usageChangePct}%${a.tags.length ? ` · ${a.tags.join(", ")}` : ""}`);
+      } else if (part.toolName === "get_account_snapshot") {
         const acct = out.account as { name?: string } | undefined;
+        const billing = out.billing as { mrr?: string; daysToRenewal?: number; failedPayment?: string | null } | undefined;
+        const usage = out.usage as { changePct?: number; currentWeeklyActiveSeats?: number; baselineWeeklyActiveSeats?: number } | undefined;
+        const tickets = (out.tickets ?? []) as { identifier: string; title: string; state: string }[];
+        summary = `risk ${out.riskScore}/100`;
+        details = [
+          `${billing?.mrr} · renews in ${billing?.daysToRenewal} days`,
+          `seats ${usage?.currentWeeklyActiveSeats} of ${usage?.baselineWeeklyActiveSeats} (${usage?.changePct}%)`,
+          ...(billing?.failedPayment ? [`billing — ${billing.failedPayment}`] : []),
+          ...tickets.map((t) => `${t.identifier} — ${t.title} (${t.state})`),
+          ...((out.riskReasons ?? []) as string[]),
+        ];
         summary = `${acct?.name ?? "account"} · risk ${out.riskScore}/100`;
-      } else if (part.toolName === "propose_save_play") summary = `${out.actionCount} actions proposed`;
-      emit({ type: "tool_result", id: part.toolCallId, name: part.toolName, summary });
+      } else if (part.toolName === "propose_save_play") {
+        summary = `${out.actionCount} actions proposed`;
+        const dropped = (out.droppedUnconfigured ?? []) as string[];
+        if (dropped.length) details = [`dropped, connector not configured: ${dropped.join(", ")}`];
+      }
+      emit({ type: "tool_result", id: part.toolCallId, name: part.toolName, summary, details });
     } else if (part.type === "error") {
       throw new Error(String((part as { error: unknown }).error));
     }

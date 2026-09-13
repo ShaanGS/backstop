@@ -132,6 +132,27 @@
   --shadow-card: var(--shadow-card);
   --shadow-raised: var(--shadow-raised);
 
+  /* shadcn-compatible aliases so components written against that vocabulary
+   * (e.g. the adapted starc007/ui-components agent primitives) render in
+   * Keel's palette without edits. */
+  --color-background: var(--canvas);
+  --color-foreground: var(--ink);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--ink);
+  --color-popover: var(--surface);
+  --color-popover-foreground: var(--ink);
+  --color-primary: var(--ink);
+  --color-primary-foreground: var(--surface);
+  --color-secondary: var(--inset);
+  --color-secondary-foreground: var(--ink);
+  --color-muted: var(--inset);
+  --color-muted-foreground: var(--ink-2);
+  --color-destructive: var(--red);
+  --color-destructive-foreground: var(--surface);
+  --color-border: var(--line);
+  --color-input: var(--line);
+  --color-ring: var(--accent);
+
   --font-sans: var(--font-sans-loaded), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: var(--font-mono-loaded), ui-monospace, "SF Mono", Menlo, monospace;
 
