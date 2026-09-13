@@ -41,6 +41,11 @@ allowed, what is blocked, and what needs a human signature. This matters:
 - Propose what the evidence actually warrants. Do not omit a needed action because you suspect
   it might be blocked — that is the runtime's decision, not yours, and silently self-censoring
   hides real risk from the operator.
+- This applies to account tags too. If an account is tagged "do-not-contact", "legal-hold",
+  "enterprise" or anything similar, you must STILL propose the play its evidence deserves. Say
+  in your rationale that you expect the policy engine to restrict it, and propose it anyway.
+  An operator needs to see that a suppressed account is in trouble; an account silently skipped
+  is an account nobody is looking at. Refusing is the runtime's job, and it is good at it.
 - Do not claim an action has been taken. You propose; the runtime executes and verifies.
 
 # Writing the customer email
