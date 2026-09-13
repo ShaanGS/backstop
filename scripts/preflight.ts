@@ -40,27 +40,39 @@ async function checkSlack(): Promise<Check> {
   const { slack } = await import("../lib/connectors/slack");
   const auth = await slack().auth.test();
   const channel = process.env.SLACK_CHANNEL_ID!;
+
+  /* Probe with chat.getPermalink — the same call Keel uses to verify a posted
+     alert. A deliberately impossible timestamp means nothing is written, and
+     the error distinguishes the cases that matter: "message_not_found" proves
+     the channel is reachable, anything else names the real problem. Checking
+     membership properly would need channels:read, and Keel has no business
+     holding a scope it never uses. */
   try {
-    const info = (await slack().conversations.info({ channel })) as {
-      channel?: { name?: string; is_member?: boolean };
-    };
-    if (info.channel?.is_member === false) {
+    await slack().chat.getPermalink({ channel, message_ts: "0000000000.000000" });
+    return { ok: true, note: `@${auth.user} · channel reachable` };
+  } catch (e) {
+    const err = (e as { data?: { error?: string; needed?: string } }).data?.error ?? msg(e);
+    if (err === "message_not_found") {
       return {
-        ok: false,
-        note: `bot is not in #${info.channel.name ?? channel}`,
-        fix: `Type "/invite @${auth.user}" in that Slack channel.`,
+        ok: true,
+        note: `@${auth.user} in ${auth.team} · channel reachable`,
       };
     }
-    return { ok: true, note: `@${auth.user} in #${info.channel?.name ?? channel}` };
-  } catch (e) {
-    const m = msg(e);
-    if (m.includes("channel_not_found")) {
-      return { ok: false, note: "channel not found", fix: "SLACK_CHANNEL_ID should look like C0123ABCDEF — copy it from the channel's About tab, not the channel name." };
+    if (err === "channel_not_found") {
+      return {
+        ok: false,
+        note: "channel not found",
+        fix: `SLACK_CHANNEL_ID should look like C0123ABCDEF — copy it from the bottom of the channel's About tab, not the channel name. If the channel is private, run "/invite @${auth.user}" there first.`,
+      };
     }
-    if (m.includes("missing_scope")) {
-      return { ok: false, note: "missing scope", fix: "OAuth & Permissions → Bot Token Scopes → add chat:write, then reinstall the app." };
+    if (err === "missing_scope") {
+      return {
+        ok: false,
+        note: "missing scope",
+        fix: "OAuth & Permissions → Bot Token Scopes → add chat:write, then Reinstall to Workspace.",
+      };
     }
-    return { ok: false, note: m };
+    return { ok: false, note: err };
   }
 }
 
