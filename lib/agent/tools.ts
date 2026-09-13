@@ -14,7 +14,11 @@ import type { Plan, ProposedAction } from "../types";
 
 export type ProposalSink = { plan: Plan | null };
 
-export function buildTools(sink: ProposalSink, onRead?: (name: string, summary: string) => void) {
+export function buildTools(
+  sink: ProposalSink,
+  onRead?: (name: string, summary: string) => void,
+  onEvidence?: (items: import("../types").Evidence[]) => void,
+) {
   return {
     list_accounts: tool({
       description:
@@ -46,6 +50,7 @@ export function buildTools(sink: ProposalSink, onRead?: (name: string, summary: 
       }),
       execute: async ({ accountId }) => {
         const s = await buildSnapshot(accountId);
+        onEvidence?.(s.evidence);
         onRead?.("get_account_snapshot", `${s.account.name} · risk ${s.riskScore}/100`);
         return {
           account: {

@@ -23,6 +23,7 @@ export const MODEL = process.env.KEEL_MODEL ?? "claude-opus-5";
 export type AgentEvent =
   | { type: "run_started"; runId: string; at: string }
   | { type: "thinking_delta"; text: string }
+  | { type: "evidence"; items: AccountSnapshot["evidence"] }
   | { type: "tool_call"; id: string; name: string; args: unknown }
   | { type: "tool_result"; id: string; name: string; summary: string }
   | { type: "plan"; plan: Plan; snapshot: SnapshotDTO }
@@ -119,8 +120,13 @@ export async function investigate(
   opts: { runId: string; instruction: string },
 ): Promise<Plan> {
   const sink: ProposalSink = { plan: null };
-  const tools = buildTools(sink, (name, summary) =>
-    record({ runId: opts.runId, kind: "tool_read", detail: { name, summary } }),
+  const tools = buildTools(
+    sink,
+    (name, summary) => record({ runId: opts.runId, kind: "tool_read", detail: { name, summary } }),
+    (items) => {
+      record({ runId: opts.runId, kind: "evidence", detail: { count: items.length } });
+      emit({ type: "evidence", items });
+    },
   );
 
   const result = streamText({

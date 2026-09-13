@@ -13,6 +13,8 @@ export function linear(): LinearClient {
 /** Label applied to every issue Keel opens, so its own work is never
  *  mistaken for a customer-reported problem on the next run. */
 export const RECOVERY_LABEL = "keel-recovery";
+/** Tickets opened before the rename still carry the old label. */
+export const RECOVERY_LABELS = [RECOVERY_LABEL, "backstop-recovery"];
 
 /** Issues are namespaced per account by a `[Account Name]` title prefix. */
 export function titlePrefix(accountName: string) {
@@ -32,7 +34,7 @@ export async function getTickets(accountName: string): Promise<Ticket[]> {
     // Exclude Keel's own recovery tasks: they are the output of a previous
     // run, not evidence of customer pain, and counting them would let the agent
     // escalate an account on the strength of its own earlier actions.
-    if (names.includes(RECOVERY_LABEL)) continue;
+    if (names.some((n) => RECOVERY_LABELS.includes(n.toLowerCase()))) continue;
     out.push({
       id: issue.id,
       identifier: issue.identifier,

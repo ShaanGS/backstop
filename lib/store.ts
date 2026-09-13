@@ -116,15 +116,23 @@ export function scoreRisk(billing: BillingSignal, usage: UsageSignal, tickets: T
   return { score: Math.min(100, score), reasons };
 }
 
-/** Cite keys are per-source and per-snapshot: stripe-1, linear-2, usage-1. */
-function evidenceFactory() {
+/**
+ * Cite keys carry the account, not just the source: `acme-linear-1`.
+ *
+ * They used to be per-snapshot (`linear-1`), which collided — the agent reads
+ * six accounts in a run and saw six different `linear-1`s, then cited one it
+ * could not have meant. Including the account makes every key unambiguous
+ * across the whole run.
+ */
+function evidenceFactory(accountId: string) {
+  const token = accountId.replace(/^acc_/, "");
   const counts: Record<string, number> = {};
   let seq = 0;
   return (e: Omit<Evidence, "id" | "key" | "retrievedAt">): Evidence => {
     counts[e.source] = (counts[e.source] ?? 0) + 1;
     return {
-      id: `ev_${(++seq).toString(36)}`,
-      key: `${e.source}-${counts[e.source]}`,
+      id: `ev_${token}_${(++seq).toString(36)}`,
+      key: `${token}-${e.source}-${counts[e.source]}`,
       retrievedAt: new Date().toISOString(),
       ...e,
     };
@@ -149,7 +157,7 @@ export async function buildSnapshot(accountId: string): Promise<AccountSnapshot>
 
   const { score, reasons } = scoreRisk(billing, usage, tickets);
 
-  const ev = evidenceFactory();
+  const ev = evidenceFactory(accountId);
   const evidence: Evidence[] = [
     ev({
       source: "stripe",

@@ -25,6 +25,7 @@ type Turn = {
   tools: { id: string; name: string; summary?: string }[];
   plan: Plan | null;
   snapshot: SnapshotDTO | null;
+  evidence: SnapshotDTO["evidence"];
   decisions: PolicyDecision[];
   gate: { planId: string; rule: string; reason: string; actions: ProposedAction[] } | null;
   rows: RowState[];
@@ -37,7 +38,7 @@ type Turn = {
 const newTurn = (instruction: string): Turn => ({
   id: `t_${Date.now().toString(36)}`,
   instruction, phase: "investigating", reasoning: "", tools: [], plan: null, snapshot: null,
-  decisions: [], gate: null, rows: [], tally: null, error: null, startedAt: Date.now(), ms: 0,
+  evidence: [], decisions: [], gate: null, rows: [], tally: null, error: null, startedAt: Date.now(), ms: 0,
 });
 
 export default function Console() {
@@ -103,6 +104,7 @@ export default function Console() {
     switch (e.type) {
       case "run_started": patch((t) => ({ ...t, phase: "investigating" })); break;
       case "thinking_delta": patch((t) => ({ ...t, reasoning: t.reasoning + e.text })); break;
+      case "evidence": patch((t) => ({ ...t, evidence: [...t.evidence, ...e.items] })); break;
       case "tool_call": patch((t) => ({ ...t, tools: [...t.tools, { id: e.id, name: e.name }] })); break;
       case "tool_result":
         patch((t) => ({ ...t, tools: t.tools.map((c) => (c.id === e.id ? { ...c, summary: e.summary } : c)) })); break;
@@ -340,7 +342,7 @@ function TurnView({ t, onDecide, onReplay, isLast }: {
             style={{ gridTemplateRows: showProse ? "1fr" : "0fr", opacity: showProse ? 1 : 0, transitionTimingFunction: "cubic-bezier(0.23,1,0.32,1)" }}>
             <div className="overflow-hidden">
               <div className={cn("rounded-card p-3.5", t.snapshot ? "bg-inset" : "bg-surface shadow-card")}>
-                <AgentProse text={t.reasoning} evidence={t.snapshot?.evidence ?? []} live={t.phase === "investigating"} cited />
+                <AgentProse text={t.reasoning} evidence={t.evidence} live={t.phase === "investigating"} cited />
               </div>
             </div>
           </div>

@@ -18,7 +18,7 @@ import type { Evidence } from "@/lib/types";
  * itself is the motion; nothing else needs to move.
  * ───────────────────────────────────────────────────────── */
 
-const CITE = /\[([a-z]+-\d+)\]/g;
+const CITE = /\[([a-z0-9]+(?:-[a-z0-9]+)+-\d+)\]/g;
 const INLINE = /\*\*([^*]+)\*\*|\*([^*\n]+)\*|`([^`\n]+)`/g;
 
 type Node =
