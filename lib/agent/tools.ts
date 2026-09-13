@@ -9,6 +9,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { buildSnapshot, listAccounts, getUsage } from "../store";
+import { isConfigured } from "../env";
 import type { Plan, ProposedAction } from "../types";
 
 export type ProposalSink = { plan: Plan | null };
@@ -112,28 +113,32 @@ export function buildTools(sink: ProposalSink, onRead?: (name: string, summary: 
       }),
       execute: async (input) => {
         const actions: ProposedAction[] = [];
-        if (input.recoveryTask) {
+        // An action whose connector has no credentials is dropped here rather
+        // than failing later. The plan reflects what this deployment can
+        // actually do, and the operator sees exactly what was omitted.
+        const skipped: string[] = [];
+        if (input.recoveryTask && isConfigured("linear")) {
           actions.push({
             type: "create_linear_issue",
             summary: `Create Linear task "${input.recoveryTask.title}"`,
             payload: { ...input.recoveryTask },
           });
         }
-        if (input.createSavePlanDoc) {
+        if (input.createSavePlanDoc && isConfigured("notion")) {
           actions.push({
             type: "create_notion_page",
             summary: "Write the save plan to Notion",
             payload: { headline: input.headline },
           });
         }
-        if (input.customerEmail) {
+        if (input.customerEmail && isConfigured("resend")) {
           actions.push({
             type: "send_customer_email",
             summary: `Email the customer — "${input.customerEmail.subject}"`,
             payload: { ...input.customerEmail },
           });
         }
-        if (input.alertOwner) {
+        if (input.alertOwner && isConfigured("slack")) {
           actions.push({
             type: "post_slack_alert",
             summary: "Alert the account owner in Slack",
@@ -149,10 +154,16 @@ export function buildTools(sink: ProposalSink, onRead?: (name: string, summary: 
           evidence: [],
           actions,
         };
+        if (input.recoveryTask && !isConfigured("linear")) skipped.push("linear");
+        if (input.createSavePlanDoc && !isConfigured("notion")) skipped.push("notion");
+        if (input.customerEmail && !isConfigured("resend")) skipped.push("resend");
+        if (input.alertOwner && !isConfigured("slack")) skipped.push("slack");
+
         return {
           accepted: true,
           planId: sink.plan.id,
           actionCount: actions.length,
+          droppedUnconfigured: skipped,
           note: "Plan recorded. The policy engine will now review it.",
         };
       },

@@ -38,4 +38,8 @@ not with your product. Do not apologise twice. Do not use the words "reach out",
 "touch base", "valued customer", or "we noticed". No emoji. No exclamation marks. Reference the
 concrete problem you found and offer one specific next step.
 
+Only actions whose app is actually connected in this deployment will be carried out; any
+others are dropped from your plan and reported to the operator. Propose what the situation
+warrants and let the runtime handle availability.
+
 Be direct and concise in your reasoning. The operator reading your output is busy.`;

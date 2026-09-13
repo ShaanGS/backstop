@@ -110,15 +110,21 @@ half-executes a recovery sequence.
 
 ## External apps
 
-Five, against a minimum of three. Two read, three write, and **every write is verified by a read-back**.
+Five connectors are implemented. **The recorded demo runs with three of them credentialed —
+Stripe, Linear and Resend** — which is what the two-minute video shows end to end. Notion and
+Slack are fully implemented and need only their environment variables; Backstop detects which
+connectors are configured and drops unavailable actions from the plan rather than failing on
+them, so the agent's behaviour degrades cleanly.
 
-| App | Direction | What Backstop does with it | Verified by |
-|---|---|---|---|
-| **Stripe** (test mode) | read | MRR, subscription status, renewal date, uncollected invoices | — |
-| **Linear** | read + write | Reads open tickets and escalations; creates the recovery task | `linear.issue(id)` re-fetch + title match |
-| **Notion** | write | Writes the evidence-backed save-plan document | `pages.retrieve(id)`, asserts not archived |
-| **Resend** | write | Sends the tailored customer email | `emails.get(id)`, asserts delivery status |
-| **Slack** | write | Block Kit alert to the account owner with the evidence | `chat.getPermalink(ts)` re-resolve |
+Every write is verified by a read-back against the app's own API.
+
+| App | Direction | What Backstop does with it | Verified by | Status |
+|---|---|---|---|---|
+| **Stripe** (test mode) | read | MRR, subscription status, renewal date, uncollected invoices | — | ✅ in demo |
+| **Linear** | read + write | Reads open tickets and escalations; creates the recovery task | `linear.issue(id)` re-fetch + title match | ✅ in demo |
+| **Notion** | write | Writes the evidence-backed save-plan document | `pages.retrieve(id)`, asserts not archived | implemented |
+| **Resend** | write | Sends the tailored customer email | `emails.get(id)`, asserts delivery status | ✅ in demo |
+| **Slack** | write | Block Kit alert to the account owner with the evidence | `chat.getPermalink(ts)` re-resolve | implemented |
 
 Product-usage telemetry (weekly active seats) is Backstop's own first-party data in
 [`data/accounts.json`](data/accounts.json) — as it would be for any real vendor. Billing and
@@ -225,6 +231,29 @@ Fixture mode proves the decision logic; live mode proves the integrations. Both 
 submission.
 
 ### 2. End-to-end verification against the real apps
+
+A real run, captured from the live system:
+
+```
+→ list_accounts                    6 accounts
+→ get_account_snapshot  ×6         all six investigated in parallel
+→ propose_save_play                Acme Robotics, risk 92/100
+
+POLICY  CUSTOMER_CONTACT_APPROVAL → require_approval
+⏸ halted at the approval gate
+
+[approved]
+EXECUTED  create_linear_issue   verified=true  Issue MAR-11 exists with matching title.
+EXECUTED  send_customer_email   verified=true  Message 02805b7b… present in Resend, status sent.
+executed=2 failed=0
+```
+
+The agent chose Acme on its own and, unprompted, flagged a conflict in the evidence: Stripe
+reported the subscription `active` while $4,500 sat uncollected, so it told the owner to
+establish whether this was a dunning failure or a customer withholding payment on a product
+they could not log into — *before* any collections action. That judgment is not in the
+system prompt.
+
 
 After a live run I confirm each write by hand in the app itself — the Linear issue, the Notion
 page, the email in the inbox, the Slack message — and check it against what the UI claims. The

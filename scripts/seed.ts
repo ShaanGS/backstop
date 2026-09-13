@@ -76,11 +76,17 @@ async function seedStripe(map: SeedMap) {
     }
 
     // Attach a card. The failed-payment account gets a card that always declines.
-    const pm = acc.failedPayment ? "pm_card_chargeDeclined" : "pm_card_visa";
+    // chargeCustomerFail attaches cleanly but declines when charged, which is how we
+    // produce a genuine uncollected invoice rather than a fake status string.
+    const pm = acc.failedPayment ? "pm_card_chargeCustomerFail" : "pm_card_visa";
     const attached = await stripe.paymentMethods.list({ customer: customerId, type: "card", limit: 1 });
     if (!attached.data.length) {
-      await stripe.paymentMethods.attach(pm, { customer: customerId });
-      await stripe.customers.update(customerId, { invoice_settings: { default_payment_method: pm } });
+      try {
+        const method = await stripe.paymentMethods.attach(pm, { customer: customerId });
+        await stripe.customers.update(customerId, { invoice_settings: { default_payment_method: method.id } });
+      } catch (err) {
+        log("⚠", `  could not attach ${pm}: ${(err as Error).message}`);
+      }
     }
 
     // One active subscription per account, with the renewal date pinned by a
@@ -90,7 +96,8 @@ async function seedStripe(map: SeedMap) {
       await stripe.subscriptions.create({
         customer: customerId,
         items: [{ price: await priceFor(acc) }],
-        billing_cycle_anchor: Math.floor(Date.now() / 1000) + acc.renewalInDays * DAY,
+        // Stripe rejects an anchor beyond the next natural billing date, so cap at 28d.
+        billing_cycle_anchor: Math.floor(Date.now() / 1000) + Math.min(acc.renewalInDays, 28) * DAY,
         proration_behavior: "none",
         payment_behavior: "allow_incomplete",
         metadata: { backstop_account_id: acc.id },
@@ -113,6 +120,9 @@ async function seedStripe(map: SeedMap) {
           customer: customerId,
           collection_method: "charge_automatically",
           auto_advance: false,
+          // Stripe excludes pending invoice items by default; without this the
+          // invoice finalises at $0 and auto-pays, and there is no failure to find.
+          pending_invoice_items_behavior: "include",
           metadata: { backstop_account_id: acc.id },
         });
         await stripe.invoices.finalizeInvoice(invoice.id!);
