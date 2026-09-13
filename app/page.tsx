@@ -6,6 +6,8 @@ import AgentProse from "@/components/agent-prose";
 import Composer, { type MentionAccount } from "@/components/composer";
 import { AccountCard, ApprovalGate, PolicyPanel, type AccountRow } from "@/components/run-panels";
 import CaseFile, { Receipts } from "@/components/case-file";
+import Ledger from "@/components/ledger";
+import type { LedgerEntry, LedgerSummary } from "@/lib/ledger";
 import { AccountSkeleton, ConnectorRow } from "@/components/states";
 import { ToolCard, ToolLog } from "@/components/agents/tool-card";
 import LoadingState from "@/components/loading-state";
@@ -184,6 +186,26 @@ export default function Console() {
     id: a.id, name: a.name, mrrCents: a.mrrCents, riskScore: a.riskScore, tags: a.tags,
   }));
 
+  /* ── the ledger — what Keel has done, read back from disk ─────────── */
+
+  const [view, setView] = useState<"console" | "ledger">("console");
+  const [ledger, setLedger] = useState<{
+    entries: LedgerEntry[];
+    summary: LedgerSummary;
+    evals: { passed: number; total: number; mustNot: number } | null;
+  } | null>(null);
+
+  const loadLedger = useCallback(async () => {
+    try {
+      const r = await fetch("/api/ledger", { cache: "no-store" });
+      if (r.ok) setLedger(await r.json());
+    } catch { /* the console still works without it */ }
+  }, []);
+
+  useEffect(() => { if (view === "ledger") void loadLedger(); }, [view, loadLedger]);
+  /* Re-read once a run settles: the ledger is written by the server mid-run. */
+  useEffect(() => { if (!busy) void loadLedger(); }, [busy, loadLedger]);
+
   /* ── render ───────────────────────────────────────────────────────── */
 
   return (
@@ -241,26 +263,61 @@ export default function Console() {
             <p className="text-[11.5px] text-ink-3">Model-driven investigation · deterministic, policy-gated execution</p>
           </div>
           <div className="ml-auto flex items-center gap-2">
-            {current && busy && <span className="font-mono text-[11px] text-ink-3 tabular-nums">{(current.ms / 1000).toFixed(1)}s</span>}
-            {current && <StatusPill phase={current.phase} />}
+            {view === "console" && current && busy && (
+              <span className="font-mono text-[11px] text-ink-3 tabular-nums">{(current.ms / 1000).toFixed(1)}s</span>
+            )}
+            {view === "console" && current && <StatusPill phase={current.phase} />}
+            <div role="tablist" className="flex items-center gap-0.5 rounded-[9px] bg-inset p-0.5">
+              {(["console", "ledger"] as const).map((v) => (
+                <button
+                  key={v}
+                  role="tab"
+                  aria-selected={view === v}
+                  onClick={() => setView(v)}
+                  className={cn(
+                    "relative rounded-[7px] px-2.5 py-1 text-[11.5px] font-medium capitalize transition-colors duration-150",
+                    view === v ? "bg-surface text-ink shadow-hairline" : "text-ink-3 hover:text-ink-2",
+                  )}
+                >
+                  {v}
+                  {v === "ledger" && ledger && ledger.summary.total > 0 && (
+                    <span className="ml-1.5 font-mono text-[10px] text-ink-3 tabular-nums">{ledger.summary.total}</span>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
         </header>
 
-        <div ref={scrollRef} className="scroll-slim min-h-0 flex-1 overflow-y-auto px-5 py-5">
-          <div className="mx-auto flex w-full max-w-[740px] flex-col gap-7">
-            {!turns.length && <Welcome connectors={connectors} modelReady={modelReady} hint={hint} onPick={(q) => ask(q)} />}
-            {turns.map((t) => (
-              <TurnView key={t.id} t={t} onDecide={decide} onReplay={replay} isLast={t.id === current?.id} />
-            ))}
+        {view === "ledger" ? (
+          <div className="scroll-slim min-h-0 flex-1 overflow-y-auto px-5 py-2">
+            <Ledger
+              entries={ledger?.entries ?? []}
+              summary={ledger?.summary ?? {
+                total: 0, executed: 0, verified: 0, blocked: 0, skipped: 0, failed: 0, runs: 0, apps: [],
+              }}
+              evals={ledger?.evals ?? { passed: 0, total: 0, mustNot: 0 }}
+            />
           </div>
-        </div>
+        ) : (
+          <>
+            <div ref={scrollRef} className="scroll-slim min-h-0 flex-1 overflow-y-auto px-5 py-5">
+              <div className="mx-auto flex w-full max-w-[740px] flex-col gap-7">
+                {!turns.length && <Welcome connectors={connectors} modelReady={modelReady} hint={hint} onPick={(q) => ask(q)} />}
+                {turns.map((t) => (
+                  <TurnView key={t.id} t={t} onDecide={decide} onReplay={replay} isLast={t.id === current?.id} />
+                ))}
+              </div>
+            </div>
 
-        <div className="border-t border-line px-5 py-3">
-          <div className="mx-auto w-full max-w-[740px]">
-            <Composer accounts={mentions} busy={busy || ready === false}
-              onSubmit={(text, mentioned) => ask(text, mentioned)} />
-          </div>
-        </div>
+            <div className="border-t border-line px-5 py-3">
+              <div className="mx-auto w-full max-w-[740px]">
+                <Composer accounts={mentions} busy={busy || ready === false}
+                  onSubmit={(text, mentioned) => ask(text, mentioned)} />
+              </div>
+            </div>
+          </>
+        )}
       </main>
     </div>
   );

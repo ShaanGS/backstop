@@ -1,0 +1,19 @@
+{
+  "ac20ff8d26be6c5c31432e4ba2378d49": {
+    "key": "ac20ff8d26be6c5c31432e4ba2378d49",
+    "accountId": "acc_acme",
+    "actionType": "create_linear_issue",
+    "planId": "plan_mu0amolw0fit",
+    "externalId": "b8a5f554-b3c9-4878-9273-3d0d601da4b7",
+    "externalUrl": "https://linear.app/marlloz/issue/MAR-21/acme-robotics-acme-robotics-save-play-sso-fix-dollar4500-recovery",
+    "executedAt": "2026-09-13T20:56:07.650Z"
+  },
+  "447a0545b1a97c42786fe4433c7d5f5c": {
+    "key": "447a0545b1a97c42786fe4433c7d5f5c",
+    "accountId": "acc_acme",
+    "actionType": "send_customer_email",
+    "planId": "plan_mu0amolw0fit",
+    "externalId": "20c93a19-f921-4ff1-aed4-f51a23c21d80",
+    "executedAt": "2026-09-13T20:56:09.099Z"
+  }
+}

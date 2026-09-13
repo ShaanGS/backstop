@@ -11,12 +11,13 @@ import type { ActionType, PolicyDecision, Plan } from "./types";
 
 /** Actions that are visible to the customer. Everything else is internal. */
 export const CUSTOMER_FACING: ActionType[] = ["send_customer_email"];
-const ALL_ACTIONS: ActionType[] = [
+/** Actions only ever seen by the team. Suppression rules must not reach these. */
+export const INTERNAL: ActionType[] = [
   "create_linear_issue",
   "create_notion_page",
-  "send_customer_email",
   "post_slack_alert",
 ];
+const ALL_ACTIONS: ActionType[] = [...INTERNAL, ...CUSTOMER_FACING];
 
 /** Accounts above this monthly recurring revenue never act without a human. */
 export const ENTERPRISE_MRR_CENTS = 500_000;
@@ -27,16 +28,30 @@ export function evaluatePolicy(snapshot: AccountSnapshot, plan: Plan): PolicyDec
   const decisions: PolicyDecision[] = [];
   const { account, billing, tickets } = snapshot;
 
-  // 1. DO_NOT_CONTACT — hard stop on everything. Legal/CS owns this flag.
+  // 1. DO_NOT_CONTACT — a rule about *outbound*, not about awareness.
+  //
+  //    Legal/CS owns this flag and nothing the model proposes may reach the
+  //    customer while it is set. But suppressing the internal alert too would
+  //    mean a distressed account simply vanishes: no ticket, no record, nobody
+  //    told. That is how suppressed accounts churn without anyone noticing.
+  //    So outbound is blocked and internal notice is not merely permitted — it
+  //    is the only way anyone finds out.
   if (account.tags.includes("do-not-contact")) {
     decisions.push({
       rule: "DO_NOT_CONTACT",
       outcome: "block",
-      reason: `${account.name} is tagged do-not-contact. No outbound or internal action may be taken on this account.`,
-      appliesTo: ALL_ACTIONS,
+      reason: `${account.name} is tagged do-not-contact. Nothing the customer would see may be sent.`,
+      appliesTo: CUSTOMER_FACING,
       evidence: `account.tags = [${account.tags.join(", ")}]`,
     });
-    return decisions; // nothing else matters
+    decisions.push({
+      rule: "INTERNAL_AWARENESS",
+      outcome: "allow",
+      reason:
+        "Outbound is suppressed, so internal notice is mandatory. An account nobody may contact and nobody is told about is an account nobody is looking at.",
+      appliesTo: INTERNAL,
+      evidence: `account.tags = [${account.tags.join(", ")}]`,
+    });
   }
 
   // 2. OPEN_ESCALATION — a live escalation means a human owns the relationship.

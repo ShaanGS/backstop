@@ -9,7 +9,16 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import type { AuditEvent } from "./types";
 
-const AUDIT_PATH = join(process.cwd(), ".keel", "audit.jsonl");
+/**
+ * Fixture runs write to their own file. The eval suite executes the same
+ * pipeline with the third-party network boundary stubbed, and those actions
+ * never happened to a real customer — letting them share the live trail would
+ * make the ledger claim work it never did. Read path: live only.
+ */
+function auditPath(): string {
+  const name = process.env.KEEL_SINK === "1" ? "audit.fixture.jsonl" : "audit.jsonl";
+  return join(process.cwd(), ".keel", name);
+}
 
 function ensureDir(path: string) {
   const dir = dirname(path);
@@ -18,14 +27,16 @@ function ensureDir(path: string) {
 
 export function record(event: Omit<AuditEvent, "ts">): AuditEvent {
   const full: AuditEvent = { ts: new Date().toISOString(), ...event };
-  ensureDir(AUDIT_PATH);
-  appendFileSync(AUDIT_PATH, JSON.stringify(full) + "\n", "utf8");
+  const path = auditPath();
+  ensureDir(path);
+  appendFileSync(path, JSON.stringify(full) + "\n", "utf8");
   return full;
 }
 
 export function readAudit(runId?: string): AuditEvent[] {
-  if (!existsSync(AUDIT_PATH)) return [];
-  const all = readFileSync(AUDIT_PATH, "utf8")
+  const path = auditPath();
+  if (!existsSync(path)) return [];
+  const all = readFileSync(path, "utf8")
     .split("\n")
     .filter(Boolean)
     .map((line) => JSON.parse(line) as AuditEvent);

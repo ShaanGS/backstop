@@ -1,6 +1,6 @@
 # Keel reliability report
 
-Generated 2026-09-13T20:29:43.409Z · mode: **fixture (network boundary stubbed)** · model-independent (policy and execution gates only).
+Generated 2026-09-13T20:52:40.943Z · mode: **fixture (network boundary stubbed)** · model-independent (policy and execution gates only).
 
 **14/14 cases passed**, including **5/5 must-not-act cases**.
 
@@ -15,7 +15,7 @@ Generated 2026-09-13T20:29:43.409Z · mode: **fixture (network boundary stubbed)
 | ✅ | Documentation-only play writes the save plan and nothing else | must-act | `DEFAULT_ALLOW` | `create_notion_page` | — |
 | ✅ | Open escalation still permits the internal task and owner alert | must-act | `OPEN_ESCALATION` | `create_linear_issue`, `post_slack_alert` | — |
 | ✅ | Healthy account with an empty plan performs nothing | must-act | `DEFAULT_ALLOW` | — | — |
-| ✅ | MUST NOT ACT — do-not-contact tag blocks every action, internal ones included | must-not-act | `DO_NOT_CONTACT` | — | `create_linear_issue`, `create_notion_page`, `send_customer_email`, `post_slack_alert` |
+| ✅ | MUST NOT ACT — do-not-contact blocks the customer email, and still tells a human | must-not-act | `DO_NOT_CONTACT`, `INTERNAL_AWARENESS`, `CUSTOMER_CONTACT_APPROVAL` | `create_linear_issue`, `create_notion_page`, `post_slack_alert` | `send_customer_email` |
 | ✅ | MUST NOT ACT — open escalation suppresses customer email but not the internal alert | must-not-act | `OPEN_ESCALATION`, `CUSTOMER_CONTACT_APPROVAL` | `post_slack_alert` | `send_customer_email` |
 | ✅ | MUST NOT ACT — enterprise MRR halts the whole plan at the approval gate | must-not-act | `ENTERPRISE_APPROVAL` | — | — |
 | ✅ | MUST NOT ACT — contacted 2 days ago, outreach suppressed inside the 7-day cooldown | must-not-act | `CONTACT_FREQUENCY`, `CUSTOMER_CONTACT_APPROVAL` | `create_linear_issue` | `send_customer_email` |
