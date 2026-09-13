@@ -155,15 +155,30 @@ export type AccountRow = {
 };
 
 export function Spark({ series }: { series: number[] }) {
-  const w = 52, h = 16;
+  const w = 54, h = 16, pad = 1.5;
   const min = Math.min(...series), max = Math.max(...series);
   const span = max - min || 1;
-  const pts = series.map((v, i) => `${(i / (series.length - 1)) * w},${h - ((v - min) / span) * h}`).join(" ");
+  const xy = series.map((v, i) => [
+    (i / (series.length - 1)) * w,
+    pad + (h - pad * 2) - ((v - min) / span) * (h - pad * 2),
+  ] as const);
+  const line = xy.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
   const down = series[series.length - 1] < series[0];
+  const tone = down ? "var(--red)" : "var(--green)";
+  const id = `sp${series[0]}${series.length}`;
+  const [lx, ly] = xy[xy.length - 1];
   return (
-    <svg width={w} height={h} className="shrink-0" aria-hidden>
-      <polyline points={pts} fill="none" stroke={down ? "var(--red)" : "var(--green)"} strokeWidth="1.5"
-        strokeLinecap="round" strokeLinejoin="round" opacity="0.9" />
+    <svg width={w} height={h} className="shrink-0 overflow-visible" aria-hidden>
+      <defs>
+        <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={tone} stopOpacity="0.22" />
+          <stop offset="100%" stopColor={tone} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <polygon points={`0,${h} ${line} ${w},${h}`} fill={`url(#${id})`} />
+      <polyline points={line} fill="none" stroke={tone} strokeWidth="1.25"
+        strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={lx} cy={ly} r="1.6" fill={tone} />
     </svg>
   );
 }

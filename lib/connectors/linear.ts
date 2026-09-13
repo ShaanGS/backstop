@@ -10,6 +10,10 @@ export function linear(): LinearClient {
   return client;
 }
 
+/** Label applied to every issue Backstop opens, so its own work is never
+ *  mistaken for a customer-reported problem on the next run. */
+export const RECOVERY_LABEL = "backstop-recovery";
+
 /** Issues are namespaced per account by a `[Account Name]` title prefix. */
 export function titlePrefix(accountName: string) {
   return `[${accountName}]`;
@@ -24,12 +28,17 @@ export async function getTickets(accountName: string): Promise<Ticket[]> {
   const out: Ticket[] = [];
   for (const issue of res.nodes) {
     const [state, labels] = await Promise.all([issue.state, issue.labels()]);
+    const names = labels.nodes.map((n) => n.name);
+    // Exclude Backstop's own recovery tasks: they are the output of a previous
+    // run, not evidence of customer pain, and counting them would let the agent
+    // escalate an account on the strength of its own earlier actions.
+    if (names.includes(RECOVERY_LABEL)) continue;
     out.push({
       id: issue.id,
       identifier: issue.identifier,
       title: issue.title.replace(titlePrefix(accountName), "").trim(),
       url: issue.url,
-      labels: labels.nodes.map((n) => n.name),
+      labels: names,
       state: state?.name ?? "Unknown",
       createdAt: issue.createdAt.toISOString(),
     });
@@ -44,16 +53,33 @@ export async function defaultTeamId(): Promise<string> {
   return team.id;
 }
 
+/** Finds or creates the recovery label on the team. */
+async function recoveryLabelId(teamId: string): Promise<string | undefined> {
+  try {
+    const team = await linear().team(teamId);
+    const labels = await team.labels();
+    const hit = labels.nodes.find((l) => l.name.toLowerCase() === RECOVERY_LABEL);
+    if (hit) return hit.id;
+    const created = await linear().createIssueLabel({ teamId, name: RECOVERY_LABEL, color: "#5a50e0" });
+    return (await created.issueLabel)?.id;
+  } catch {
+    return undefined;
+  }
+}
+
 export async function createIssue(input: {
   title: string;
   description: string;
   priority?: number;
 }): Promise<{ id: string; url: string; identifier: string }> {
+  const teamId = await defaultTeamId();
+  const labelId = await recoveryLabelId(teamId);
   const payload = await linear().createIssue({
-    teamId: await defaultTeamId(),
+    teamId,
     title: input.title,
     description: input.description,
     priority: input.priority ?? 2,
+    ...(labelId ? { labelIds: [labelId] } : {}),
   });
   const issue = await payload.issue;
   if (!issue) throw new Error("Linear returned no issue on create.");

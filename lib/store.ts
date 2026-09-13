@@ -116,12 +116,20 @@ export function scoreRisk(billing: BillingSignal, usage: UsageSignal, tickets: T
   return { score: Math.min(100, score), reasons };
 }
 
-let evidenceSeq = 0;
-const ev = (e: Omit<Evidence, "id" | "retrievedAt">): Evidence => ({
-  id: `ev_${(++evidenceSeq).toString(36)}`,
-  retrievedAt: new Date().toISOString(),
-  ...e,
-});
+/** Cite keys are per-source and per-snapshot: stripe-1, linear-2, usage-1. */
+function evidenceFactory() {
+  const counts: Record<string, number> = {};
+  let seq = 0;
+  return (e: Omit<Evidence, "id" | "key" | "retrievedAt">): Evidence => {
+    counts[e.source] = (counts[e.source] ?? 0) + 1;
+    return {
+      id: `ev_${(++seq).toString(36)}`,
+      key: `${e.source}-${counts[e.source]}`,
+      retrievedAt: new Date().toISOString(),
+      ...e,
+    };
+  };
+}
 
 /**
  * Fetches every signal for an account from its real source and assembles the
@@ -141,6 +149,7 @@ export async function buildSnapshot(accountId: string): Promise<AccountSnapshot>
 
   const { score, reasons } = scoreRisk(billing, usage, tickets);
 
+  const ev = evidenceFactory();
   const evidence: Evidence[] = [
     ev({
       source: "stripe",

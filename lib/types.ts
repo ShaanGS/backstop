@@ -50,6 +50,8 @@ export type BillingSignal = {
 /** A single retrieved fact, carrying the app it came from and a link back. */
 export type Evidence = {
   id: string;
+  /** Short, stable handle the model cites inline, e.g. "stripe-1". */
+  key: string;
   source: ConnectorId | "usage";
   label: string;
   detail: string;

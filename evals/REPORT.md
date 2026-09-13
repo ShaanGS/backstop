@@ -1,6 +1,6 @@
 # Backstop reliability report
 
-Generated 2026-09-13T19:11:12.919Z · mode: **fixture (network boundary stubbed)** · model-independent (policy and execution gates only).
+Generated 2026-09-13T19:31:10.860Z · mode: **fixture (network boundary stubbed)** · model-independent (policy and execution gates only).
 
 **14/14 cases passed**, including **5/5 must-not-act cases**.
 

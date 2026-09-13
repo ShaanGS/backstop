@@ -80,6 +80,8 @@ export function buildTools(sink: ProposalSink, onRead?: (name: string, summary: 
           })),
           riskScore: s.riskScore,
           riskReasons: s.riskReasons,
+          // Cite these keys inline in your rationale, e.g. "[stripe-2]".
+          citations: s.evidence.map((e) => ({ key: e.key, source: e.source, fact: `${e.label}: ${e.detail}` })),
         };
       },
     }),
