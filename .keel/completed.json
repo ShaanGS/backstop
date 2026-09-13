@@ -80,5 +80,87 @@
       ]
     },
     "runId": "run_mu09i0136x7cq"
+  },
+  "plan_mu09mpemr09y": {
+    "plan": {
+      "id": "plan_mu09mpemr09y",
+      "accountId": "acc_acme",
+      "createdAt": "2026-09-13T20:27:36.094Z",
+      "rationale": "Acme scores 92, the highest in the book: weekly active seats fell from a 308 baseline to 119 (-61.4%), with the drop concentrated in the last four weeks (297 → 241 → 186 → 142 → 119) [acme-usage-1]. The probable mechanical cause is sitting in our own backlog — MAR-5, an Okta SSO login loop [acme-linear-2], which would lock users out entirely, alongside MAR-6, exports timing out over 50k rows [acme-linear-1]; neither has been triaged. Two signals conflict and I am not smoothing it over: Stripe reports the subscription as \"active\" renewing in 12 days [acme-stripe-1], yet $4,500 is uncollected [acme-stripe-2] — roughly three months at $1,500/mo, so this is a sustained collection failure, not a single declined card. Compounding it, this design-partner account has never been contacted. Secondary watch item for the operator: Lumen Health carries far more revenue at $6,800/mo and renews sooner, in 9 days [lumen-stripe-1], on a milder -28.8% decline [lumen-usage-1] — lower risk, but bigger dollars.",
+      "evidence": [
+        {
+          "id": "ev_acme_1",
+          "key": "acme-stripe-1",
+          "retrievedAt": "2026-09-13T20:28:32.066Z",
+          "source": "stripe",
+          "label": "Subscription",
+          "detail": "$1,500/mo USD, status \"active\", renews in 12 days.",
+          "url": "https://dashboard.stripe.com/test/customers/cus_VFofjFifMD9zwg"
+        },
+        {
+          "id": "ev_acme_2",
+          "key": "acme-stripe-2",
+          "retrievedAt": "2026-09-13T20:28:32.066Z",
+          "source": "stripe",
+          "label": "Failed payment",
+          "detail": "Invoice for $4500.00 has not collected.",
+          "url": "https://invoice.stripe.com/i/acct_1UE60VAsdCXMWWSs/test_YWNjdF8xVUU2MFZBc2RDWE1XV1NzLF9WRm9ob1BwdXIzQzhmclN4RGRueUFZMVp2R1BMNVFZLDE3OTg3MjA3MA0200WPzvIRRV?s=ap"
+        },
+        {
+          "id": "ev_acme_3",
+          "key": "acme-usage-1",
+          "retrievedAt": "2026-09-13T20:28:32.066Z",
+          "source": "usage",
+          "label": "Product usage",
+          "detail": "Weekly active seats 119 vs baseline 308 (-61.4%). Trailing 8 weeks: 312 → 305 → 318 → 297 → 241 → 186 → 142 → 119."
+        },
+        {
+          "id": "ev_acme_4",
+          "key": "acme-linear-1",
+          "retrievedAt": "2026-09-13T20:28:32.066Z",
+          "source": "linear",
+          "label": "Ticket MAR-6",
+          "detail": "\"Exports timing out over 50k rows\" — Backlog, labels: Bug, performance.",
+          "url": "https://linear.app/marlloz/issue/MAR-6/acme-robotics-exports-timing-out-over-50k-rows"
+        },
+        {
+          "id": "ev_acme_5",
+          "key": "acme-linear-2",
+          "retrievedAt": "2026-09-13T20:28:32.066Z",
+          "source": "linear",
+          "label": "Ticket MAR-5",
+          "detail": "\"SSO login loop on Okta\" — Backlog, labels: Bug, auth.",
+          "url": "https://linear.app/marlloz/issue/MAR-5/acme-robotics-sso-login-loop-on-okta"
+        },
+        {
+          "id": "ev_acme_6",
+          "key": "acme-linear-3",
+          "retrievedAt": "2026-09-13T20:28:32.066Z",
+          "source": "linear",
+          "label": "Account tags",
+          "detail": "growth, design-partner"
+        }
+      ],
+      "actions": [
+        {
+          "type": "create_linear_issue",
+          "summary": "Create Linear task \"Acme Robotics save play — SSO bug, $4,500 uncollected, renewal in 12 days\"",
+          "payload": {
+            "title": "Acme Robotics save play — SSO bug, $4,500 uncollected, renewal in 12 days",
+            "description": "Acme renews in 12 days [acme-stripe-1] at risk score 92. Work in this order:\n\n1. ESCALATE MAR-5 (Okta SSO login loop) out of Backlog today. This is the leading hypothesis for the seat collapse — locked-out users cannot log in, which fits the 297 → 119 slide over four weeks. Get engineering to confirm or rule out that Acme's Okta tenant is affected; that confirmation changes the whole conversation.\n2. Escalate MAR-6 (exports timing out over 50k rows). Acme is an operations-heavy account and large exports are likely core workflow.\n3. Chase the $4,500 uncollected invoice with Finance. Stripe still shows the subscription 'active', so confirm whether this is a dunning/card failure or a deliberate withhold by the customer — those require opposite responses. Do not send a dunning notice until you know which.\n4. Book 30 minutes with Priya Raghunathan (Head of Operations) before the renewal date. Bring the SSO engineer.\n5. Note for context: this is a design-partner account that has never been contacted. Treat the relationship gap as a root cause, not a detail.",
+            "priority": 1
+          }
+        },
+        {
+          "type": "send_customer_email",
+          "summary": "Email the customer — \"The Okta login loop on your account\"",
+          "payload": {
+            "subject": "The Okta login loop on your account",
+            "body": "Priya —\n\nYour weekly active seats have fallen from 308 to 119 over the past six weeks. I think I know why: MAR-5, an Okta SSO login loop, and MAR-6, exports timing out over 50k rows. Both sat in our backlog without triage. That is on us, and I am escalating both today.\n\nSeparately, a $4,500 invoice has not collected and your renewal is 12 days out. I would rather fix the product before we talk about the contract.\n\nCan you give me 30 minutes this week? Reply with a time and I will bring the engineer who owns the SSO fix.\n\n— Dana Whitfield, Keel"
+          }
+        }
+      ]
+    },
+    "runId": "run_mu09lwfukthdy"
   }
 }

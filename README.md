@@ -187,6 +187,15 @@ support signals are **not** read from there: they are fetched live from Stripe a
 run. `pnpm seed` writes the demo tenancy *into* those apps; the agent then reads it *back out* over
 the real APIs.
 
+## What it looks like
+
+| | |
+|---|---|
+| ![The console mid-investigation](docs/investigating.png) | ![The case file](docs/case-file.png) |
+| The agent reading six accounts across Stripe, Linear and telemetry. Tool cards open while a call is in flight and fold away when it lands. | What it found — risk as a meter, the numbers as hero figures, and the seat collapse against the baseline it fell away from. |
+| ![The approval gate](docs/approval.png) | ![Receipts](docs/receipts.png) |
+| Customer-visible outreach stops here regardless of account size. The policy verdict that put it there is shown above it. | Every action with its external id, a link to the real record, and whether the read-back verified it. |
+
 ## Setup
 
 Requires Node 20+ and pnpm. Total setup is about ten minutes, most of it creating free accounts.
@@ -386,6 +395,14 @@ at two commands.
 - Approval lives in Keel's own UI rather than Slack interactivity, which avoids needing a
   public webhook. Slack is notify-only.
 - Single-tenant, single-workspace. There is no auth on the console.
+
+## Credits
+
+- Agent tool-card and disclosure primitives adapted from
+  [starc007/ui-components](https://github.com/starc007/ui-components) (MIT, © 2026 Saurabh Chauhan).
+- Connector brand marks generated from [simple-icons](https://simpleicons.org) at build time
+  (`scripts/gen-marks.cjs`). Slack's mark is its own official geometry.
+- Typefaces: Inter and JetBrains Mono, self-hosted via `next/font`.
 
 ## License
 
