@@ -125,20 +125,27 @@ This is deliberate. Safety that depends on the model behaving is not safety. In 
 watch the agent propose a perfectly sensible outreach to Northwind Trading and watch the policy
 engine refuse it — defence in depth you can see working.
 
-### The four reliability primitives
+### The five reliability primitives
 
 | Primitive | File | What it guarantees |
 |---|---|---|
-| **Policy engine** | [`lib/policy.ts`](lib/policy.ts) | Five deterministic, pure-function rules decide `allow` / `block` / `require_approval` per action type, with a reason and its evidence. |
+| **Policy engine** | [`lib/policy.ts`](lib/policy.ts) | Six deterministic, pure-function rules decide `allow` / `block` / `require_approval` per action type, with a reason and its evidence. |
 | **Idempotency ledger** | [`lib/idempotency.ts`](lib/idempotency.ts) | `sha256(accountId + actionType + planId)` is looked up before every write. Replaying a plan performs **zero** new actions and reports the original resource. |
 | **Read-back verification** | [`lib/verify` in each connector](lib/connectors) | After every write the resource is re-fetched **from that app's own API** by id. An action is only "done" when the external system confirms it. |
 | **Audit log** | [`lib/audit.ts`](lib/audit.ts) | Append-only JSONL of every read, decision, policy evaluation, action and verification. The UI timeline renders from it; the eval suite asserts against it. |
+| **The ledger** | [`lib/ledger.ts`](lib/ledger.ts) | The audit trail, read back as a durable record of everything Keel has ever done — including what it refused and what it suppressed as a duplicate. Survives a refresh, a restart, and the operator who ran it. |
+
+Fixture runs write to `.keel/audit.fixture.jsonl`, not the live trail. The eval suite executes
+this same pipeline with the third-party network boundary stubbed, and those actions never
+happened to a real customer — letting them share the live file would make the ledger claim
+work it never did.
 
 ### The policy rules
 
 | Rule | Trigger | Effect |
 |---|---|---|
-| `DO_NOT_CONTACT` | account tagged `do-not-contact` | **Blocks every action**, internal ones included. Hard stop. |
+| `DO_NOT_CONTACT` | account tagged `do-not-contact` | Blocks everything the customer would see. Hard stop on outbound. |
+| `INTERNAL_AWARENESS` | fires alongside `DO_NOT_CONTACT` | Explicitly **permits** the internal task and owner alert. Suppressing outbound must not also suppress the fact that the account is in trouble. |
 | `OPEN_ESCALATION` | an open Linear issue labelled `escalation` | Blocks customer-facing outreach; internal alert still allowed so a human picks it up. |
 | `CONTACT_FREQUENCY` | last outbound touch inside 7 days | Suppresses further outreach. |
 | `ENTERPRISE_APPROVAL` | MRR > $5,000/mo | **Every** action requires human approval. Never automatic. |
@@ -173,13 +180,16 @@ them, so the agent's behaviour degrades cleanly.
 
 Every write is verified by a read-back against the app's own API.
 
-| App | Direction | What Keel does with it | Verified by | Status |
-|---|---|---|---|---|
-| **Stripe** (test mode) | read | MRR, subscription status, renewal date, uncollected invoices | — | ✅ in demo |
-| **Linear** | read + write | Reads open tickets and escalations; creates the recovery task | `linear.issue(id)` re-fetch + title match | ✅ in demo |
-| **Notion** | write | Writes the evidence-backed save-plan document | `pages.retrieve(id)`, asserts not archived | implemented |
-| **Resend** | write | Sends the tailored customer email | `emails.get(id)`, asserts delivery status | ✅ in demo |
-| **Slack** | write | Block Kit alert to the account owner with the evidence | `chat.getPermalink(ts)` re-resolve | implemented |
+The test each connector has to pass: **a different audience, on a different clock.** An app
+that only duplicates another app's reader is padding.
+
+| App | Direction | Who reads it, and when | Verified by |
+|---|---|---|---|
+| **Stripe** (test mode) | read | Keel itself — the billing truth an opinion can't override | — |
+| **Linear** | read + write | The team, over days. Reading it answers *is this churn actually a bug we already know about?*; writing puts the recovery task in the queue they already plan from | `linear.issue(id)` re-fetch + title match |
+| **Resend** | write | The customer, now. The only outbound touch, and the only irreversible one | `emails.get(id)`, asserts delivery status |
+| **Slack** | write | The account owner, this hour. The policy engine's two human-shaped verdicts — `require_approval` and `block` — otherwise exist only in a browser tab. An approval nobody sees is a stalled account; a blocked account nobody hears about dies quietly under a compliance tag | `chat.getPermalink(ts)` re-resolve |
+| **Notion** | write | Whoever inherits the account, months later. The audit log is JSONL for machines; this is the same case written for the next human, linked from the Linear ticket so context travels with the work | `pages.retrieve(id)`, asserts not archived |
 
 Product-usage telemetry (weekly active seats) is Keel's own first-party data in
 [`data/accounts.json`](data/accounts.json) — as it would be for any real vendor. Billing and
@@ -195,6 +205,8 @@ the real APIs.
 | The agent reading six accounts across Stripe, Linear and telemetry. Tool cards open while a call is in flight and fold away when it lands. | What it found — risk as a meter, the numbers as hero figures, and the seat collapse against the baseline it fell away from. |
 | ![The approval gate](docs/approval.png) | ![Receipts](docs/receipts.png) |
 | Customer-visible outreach stops here regardless of account size. The policy verdict that put it there is shown above it. | Every action with its external id, a link to the real record, and whether the read-back verified it. |
+| ![The ledger](docs/ledger.png) | |
+| Everything Keel has ever done, rebuilt from the audit trail on disk rather than from the session. Refusals and suppressed duplicates are rows too. | |
 
 ## Setup
 
@@ -267,7 +279,7 @@ plans that need no human, imminent renewal on a healthy account, documentation-o
 
 | Case | Asserts |
 |---|---|
-| `do-not-contact` | A tagged account gets **zero** actions — internal ones blocked too |
+| `do-not-contact` | A tagged account gets **zero** customer contact — *and* the internal task still fires, so the refusal reaches a human |
 | `escalation-blocks-email` | Customer email blocked, internal Slack alert still delivered |
 | `enterprise-halts` | A $6,800/mo account halts at the approval gate; unapproved ⇒ nothing runs |
 | `contact-cooldown` | Contacted 2 days ago ⇒ outreach suppressed, internal task still allowed |
@@ -336,7 +348,7 @@ Then the adversarial checks:
      SKIPPED_IDEMPOTENT · send_customer_email
     executed=0 skipped=2 failed=0
   ```
-- **Run against the `do-not-contact` account** → `0 executed, 4 blocked`, reason recorded in the timeline.
+- **Run against the `do-not-contact` account** → the customer email is blocked with its reason recorded, and the internal task is created so somebody learns the account is in trouble.
 - **Kill a connector mid-run** (revoke the Linear key) → the action retries once, fails honestly,
   and is reported as `failed` rather than silently swallowed.
 - **`cat .keel/audit.jsonl`** → every read, decision, policy evaluation, action and
