@@ -77,8 +77,8 @@ async function checkSlack(): Promise<Check> {
 }
 
 async function checkNotion(): Promise<Check> {
-  const { notion } = await import("../lib/connectors/notion");
-  const parent = process.env.NOTION_PARENT_PAGE_ID!;
+  const { notion, pageId } = await import("../lib/connectors/notion");
+  const parent = pageId(process.env.NOTION_PARENT_PAGE_ID!);
   try {
     const page = (await notion().pages.retrieve({ page_id: parent })) as { id: string };
     return { ok: true, note: `parent page ${page.id.slice(0, 8)}… reachable` };

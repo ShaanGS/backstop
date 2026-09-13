@@ -10,6 +10,19 @@ export function notion(): Client {
   return client;
 }
 
+/**
+ * Notion page ids arrive in several shapes. Copying from the address bar gives
+ * "Keel-save-plans-<32 hex>"; the share menu gives a full URL with a query
+ * string; the API returns it hyphenated as a UUID. All of them carry the same
+ * 32 hex characters, so take those and accept whatever the operator pasted
+ * rather than making them reformat it by hand.
+ */
+export function pageId(raw: string): string {
+  const hex = raw.replace(/[^0-9a-fA-F]/g, "");
+  const id = hex.length >= 32 ? hex.slice(-32) : hex;
+  return id.replace(/^(.{8})(.{4})(.{4})(.{4})(.{12})$/, "$1-$2-$3-$4-$5");
+}
+
 const text = (content: string) => [{ type: "text" as const, text: { content: content.slice(0, 1900) } }];
 
 export type SavePlanInput = {
@@ -25,7 +38,7 @@ export async function createSavePlan(
 ): Promise<{ id: string; url: string; title: string }> {
   const title = `Save plan — ${input.accountName}`;
   const page = await notion().pages.create({
-    parent: { type: "page_id", page_id: process.env.NOTION_PARENT_PAGE_ID! },
+    parent: { type: "page_id", page_id: pageId(process.env.NOTION_PARENT_PAGE_ID!) },
     properties: { title: { title: text(title) } },
     children: [
       { object: "block", type: "callout", callout: { rich_text: text(input.headline), icon: { type: "emoji", emoji: "⚠️" } } },
