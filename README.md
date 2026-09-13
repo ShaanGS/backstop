@@ -1,12 +1,20 @@
 <div align="center">
 
-# Keel
+<img src="docs/banner.png" alt="Keel — an agent trusted to take irreversible business actions" width="100%">
 
-**An autonomous revenue-retention agent that is trusted to take irreversible business actions — because every one of them is policy-checked, idempotent, approved, and verified by reading the app back.**
+<br>
+
+**An autonomous revenue-retention agent trusted to take irreversible business actions — because every one of them is policy-checked, idempotent, approved, and verified by reading the app back.**
+
+[![reliability suite](https://github.com/ShaanGS/keel/actions/workflows/ci.yml/badge.svg)](https://github.com/ShaanGS/keel/actions/workflows/ci.yml)
+[![14/14 cases](https://img.shields.io/badge/reliability-14%2F14_cases-14804a?labelColor=1c1c1f)](evals/REPORT.md)
+[![5 of them assert nothing happens](https://img.shields.io/badge/5-assert_it_does_nothing-c6303b?labelColor=1c1c1f)](evals/REPORT.md)
+[![5 external apps](https://img.shields.io/badge/external_apps-5-5a50e0?labelColor=1c1c1f)](#external-apps)
+[![license](https://img.shields.io/badge/license-MIT-9a9ea6?labelColor=1c1c1f)](LICENSE)
 
 Built for the [Multi-App AI Agent Hackathon](https://multiappagenthackathon.com) · Lemma AI × Comma Capital
 
-[Demo video (2 min)](DEMO_VIDEO_URL) · [Reliability report](evals/REPORT.md) · [Architecture](#architecture)
+**[Demo video (2 min)](DEMO_VIDEO_URL)**  ·  [Reliability report](evals/REPORT.md)  ·  [Architecture](#architecture)  ·  [How it was verified](#how-i-tested-and-verified-it-works)
 
 </div>
 
