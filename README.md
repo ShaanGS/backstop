@@ -11,10 +11,11 @@
 [![5 of them assert nothing happens](https://img.shields.io/badge/5-assert_it_does_nothing-c6303b?labelColor=1c1c1f)](evals/REPORT.md)
 [![5 external apps](https://img.shields.io/badge/external_apps-5-5a50e0?labelColor=1c1c1f)](#external-apps)
 [![license](https://img.shields.io/badge/license-MIT-9a9ea6?labelColor=1c1c1f)](LICENSE)
+[![live](https://img.shields.io/badge/live-keel--nine--flame.vercel.app-16171a?labelColor=1c1c1f)](https://keel-nine-flame.vercel.app)
 
 Built for the [Multi-App AI Agent Hackathon](https://multiappagenthackathon.com) · Lemma AI × Comma Capital
 
-**[Demo video (2 min)](DEMO_VIDEO_URL)**  ·  [Reliability report](evals/REPORT.md)  ·  [Architecture](#architecture)  ·  [How it was verified](#how-i-tested-and-verified-it-works)
+**[Live app](https://keel-nine-flame.vercel.app)**  ·  **[Demo video (2 min)](DEMO_VIDEO_URL)**  ·  [Reliability report](evals/REPORT.md)  ·  [Architecture](#architecture)  ·  [How it was verified](#how-i-tested-and-verified-it-works)
 
 </div>
 
@@ -255,6 +256,15 @@ identical from the outside — a rejected token, a bot that was never invited to
 channel, a Notion page shared with the workspace but not with the integration — and
 prints the fix. No secret is ever printed. It exits non-zero below three reachable
 apps, which is the hackathon's minimum.
+
+### Hosted
+
+**[keel-nine-flame.vercel.app](https://keel-nine-flame.vercel.app)** runs the real pipeline
+against the same five apps. One caveat stated plainly, and the ledger view repeats it on
+screen: a serverless instance has no durable disk, so Keel's state lives in `/tmp` and a cold
+start forgets it. Every gate still executes — but the idempotency ledger is only as durable as
+the instance, which is weaker than the local guarantee. Customer email is redirected by
+`RESEND_TO_OVERRIDE`, so nothing reaches a real person there either.
 
 Then seed the external apps and run:
 
