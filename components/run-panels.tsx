@@ -190,11 +190,7 @@ export function AccountCard({ a, active, onClick }: { a: AccountRow; active: boo
   /* One line, in the order a person would ask: how bad, how soon, how much.
      The old card stacked three rows of monospace figures and read like a
      terminal dump — the number you actually act on was the hardest to find. */
-  const line = [
-    `usage ${pct(a.usage.changePct)}`,
-    `renews in ${a.daysToRenewal}d`,
-    `${money(a.mrrCents)}/mo`,
-  ].join("  ·  ");
+  const line = `${money(a.mrrCents)}/mo  ·  renews ${a.daysToRenewal}d`;
 
   return (
     <button
@@ -215,8 +211,13 @@ export function AccountCard({ a, active, onClick }: { a: AccountRow; active: boo
       </span>
 
       <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-1.5">
+        <span className="flex items-baseline gap-1.5">
           <span className="truncate text-[12.5px] font-medium text-ink">{a.name}</span>
+          <span className={cn("shrink-0 text-[11px] font-medium tabular-nums",
+            a.usage.changePct < 0 ? "text-red" : "text-green")}>{pct(a.usage.changePct)}</span>
+        </span>
+        <span className="mt-0.5 flex items-center gap-1.5">
+          <span className="truncate text-[11px] text-ink-3 tabular-nums">{line}</span>
           {dnc && (
             <span className="shrink-0 rounded-[4px] bg-red-tint px-1 text-[9.5px] font-medium text-red">
               suppressed
@@ -224,11 +225,10 @@ export function AccountCard({ a, active, onClick }: { a: AccountRow; active: boo
           )}
           {!dnc && a.failedPaymentCents ? (
             <span className="shrink-0 rounded-[4px] bg-amber-tint px-1 text-[9.5px] font-medium text-amber">
-              payment failed
+              unpaid
             </span>
           ) : null}
         </span>
-        <span className="mt-0.5 block truncate text-[11px] text-ink-3 tabular-nums">{line}</span>
       </span>
 
       <span

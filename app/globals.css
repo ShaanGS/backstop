@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* ─────────────────────────────────────────────────────────
- * BACKSTOP DESIGN TOKENS
+ * KEEL DESIGN TOKENS
  * One neutral ramp (ink/line/surface), one accent, two
  * semantics (green/red) plus amber for approval states.
  * Raw custom properties are declared first so components can
@@ -10,26 +10,26 @@
  * ───────────────────────────────────────────────────────── */
 
 :root {
-  --canvas: #fbfbfa;
+  --canvas: #f6faf8;
   --surface: #ffffff;
-  --inset: #f3f3f1;
+  --inset: #eff5f2;
   --field: #ffffff;
-  --hover: rgba(22, 23, 26, 0.05);
-  --hover-2: rgba(22, 23, 26, 0.028);
-  --line: #e8e6e2;
-  --line-strong: #d6d3cd;
-  --ink: #16171a;
-  --ink-2: #61656e;
-  --ink-3: #9a9ea6;
-  --accent: #5a50e0;
-  --accent-ink: #4a41c9;
-  --accent-tint: #eeecfd;
-  --green: #14804a;
-  --green-tint: #e3f5ec;
-  --red: #c6303b;
-  --red-tint: #fce9ea;
-  --amber: #b45309;
-  --amber-tint: #fdf1e0;
+  --hover: rgba(22, 24, 28, 0.05);
+  --hover-2: rgba(22, 24, 28, 0.028);
+  --line: #e3ebe7;
+  --line-strong: #cfdcd6;
+  --ink: #16181c;
+  --ink-2: #5b6470;
+  --ink-3: #949ca7;
+  --accent: #0b8f62;
+  --accent-ink: #0a7d56;
+  --accent-tint: #e4f5ed;
+  --green: #0b8f62;
+  --green-tint: #e4f5ed;
+  --red: #d63b57;
+  --red-tint: #fdeaee;
+  --amber: #b26a0c;
+  --amber-tint: #fdf2e2;
 
   --radius-card: 14px;
   --radius-chip: 7px;
@@ -45,24 +45,24 @@
 
 :root:not([data-theme="light"]) {
   @media (prefers-color-scheme: dark) {
-    --canvas: #0a0a0b;
-    --surface: #141416;
-    --inset: #1c1c1f;
-    --field: #19191c;
+    --canvas: #0b0d0c;
+    --surface: #141715;
+    --inset: #1b1f1d;
+    --field: #181b1a;
     --hover: rgba(255, 255, 255, 0.066);
     --hover-2: rgba(255, 255, 255, 0.036);
-    --line: #262629;
-    --line-strong: #38383d;
-    --ink: #f4f4f5;
-    --ink-2: #a2a5ac;
-    --ink-3: #70737a;
-    --accent: #8f86ff;
-    --accent-ink: #a79fff;
-    --accent-tint: #1e1b3d;
-    --green: #3dd68c;
-    --green-tint: #11301f;
-    --red: #f2646f;
-    --red-tint: #38161a;
+    --line: #262b28;
+    --line-strong: #38403c;
+    --ink: #f2f5f3;
+    --ink-2: #a0a9a4;
+    --ink-3: #6f7874;
+    --accent: #3ddc9a;
+    --accent-ink: #6ee7b7;
+    --accent-tint: #0d2a20;
+    --green: #3ddc9a;
+    --green-tint: #0d2a20;
+    --red: #fb7185;
+    --red-tint: #3a1620;
     --amber: #f0a336;
     --amber-tint: #33220c;
 
@@ -75,24 +75,24 @@
 }
 
 [data-theme="dark"] {
-  --canvas: #0a0a0b;
-  --surface: #141416;
-  --inset: #1c1c1f;
-  --field: #19191c;
+  --canvas: #0b0d0c;
+  --surface: #141715;
+  --inset: #1b1f1d;
+  --field: #181b1a;
   --hover: rgba(255, 255, 255, 0.066);
   --hover-2: rgba(255, 255, 255, 0.036);
-  --line: #262629;
-  --line-strong: #38383d;
-  --ink: #f4f4f5;
-  --ink-2: #a2a5ac;
-  --ink-3: #70737a;
-  --accent: #8f86ff;
-  --accent-ink: #a79fff;
-  --accent-tint: #1e1b3d;
-  --green: #3dd68c;
-  --green-tint: #11301f;
-  --red: #f2646f;
-  --red-tint: #38161a;
+  --line: #262b28;
+  --line-strong: #38403c;
+  --ink: #f2f5f3;
+  --ink-2: #a0a9a4;
+  --ink-3: #6f7874;
+  --accent: #3ddc9a;
+  --accent-ink: #6ee7b7;
+  --accent-tint: #0d2a20;
+  --green: #3ddc9a;
+  --green-tint: #0d2a20;
+  --red: #fb7185;
+  --red-tint: #3a1620;
   --amber: #f0a336;
   --amber-tint: #33220c;
 

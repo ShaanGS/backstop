@@ -210,7 +210,7 @@ export default function Console() {
   /* ── render ───────────────────────────────────────────────────────── */
 
   return (
-    <div className="grid h-dvh grid-cols-1 lg:grid-cols-[272px_minmax(0,1fr)]">
+    <div className="grid h-dvh grid-cols-1 lg:grid-cols-[296px_minmax(0,1fr)]">
       {/* rail */}
       <aside className="hidden min-h-0 flex-col border-r border-line bg-canvas lg:flex">
         <div className="flex items-center gap-2 px-4 py-3.5">

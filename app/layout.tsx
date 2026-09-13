@@ -32,7 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Applied before paint so the console never flashes the wrong theme. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem("keel-theme");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}})()`,
+            __html: `(function(){var t="light";try{t=localStorage.getItem("keel-theme")||"light"}catch(e){}document.documentElement.setAttribute("data-theme",t)})()`,
           }}
         />
       </head>
