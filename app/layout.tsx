@@ -20,7 +20,7 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Backstop — revenue retention agent",
+  title: "Keel — revenue retention agent",
   description:
     "An autonomous agent that investigates churn risk across Stripe, Linear, Notion, Resend and Slack, then executes a policy-gated, idempotent, read-back-verified recovery play.",
 };
@@ -32,7 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Applied before paint so the console never flashes the wrong theme. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem("backstop-theme");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}})()`,
+            __html: `(function(){try{var t=localStorage.getItem("keel-theme");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}})()`,
           }}
         />
       </head>

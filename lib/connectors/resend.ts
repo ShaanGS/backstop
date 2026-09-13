@@ -10,7 +10,7 @@ export function resend(): Resend {
   return client;
 }
 
-export const FROM = process.env.RESEND_FROM ?? "Backstop <onboarding@resend.dev>";
+export const FROM = process.env.RESEND_FROM ?? "Keel <onboarding@resend.dev>";
 
 /**
  * Safety valve. When RESEND_TO_OVERRIDE is set, every customer email is
@@ -38,7 +38,7 @@ ${input.body
   .map((p) => `<p style="margin:0 0 14px">${p.replace(/\n/g, "<br>")}</p>`)
   .join("")}
 <hr style="border:0;border-top:1px solid #e7e5e1;margin:22px 0">
-<p style="font-size:12px;color:#94999f;margin:0">Sent by Backstop on behalf of the ${input.accountName} account team.${
+<p style="font-size:12px;color:#94999f;margin:0">Sent by Keel on behalf of the ${input.accountName} account team.${
     redirected ? ` Sandbox mode: intended recipient was ${input.to}.` : ""
   }</p></div>`;
 
@@ -47,7 +47,7 @@ ${input.body
     to: [to],
     subject,
     html,
-    headers: { "X-Backstop-Intended-Recipient": input.to },
+    headers: { "X-Keel-Intended-Recipient": input.to },
   });
   if (error || !data?.id) throw new Error(`Resend send failed: ${error?.message ?? "no id returned"}`);
   return { id: data.id, to, redirected };

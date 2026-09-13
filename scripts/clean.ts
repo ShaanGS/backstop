@@ -1,5 +1,5 @@
 /**
- * Removes issues Backstop opened during testing so the support signal is clean.
+ * Removes issues Keel opened during testing so the support signal is clean.
  * Keeps the five seeded customer tickets; archives everything else that carries
  * an account prefix.
  */

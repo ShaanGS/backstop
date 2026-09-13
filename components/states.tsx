@@ -1,7 +1,6 @@
 "use client";
 
-import { BorderBeam } from "border-beam";
-import { CONNECTOR_MARKS, Glyph, PATHS } from "./icons";
+import { BrandMark, Glyph, PATHS } from "./icons";
 import { cn } from "@/lib/utils";
 
 /* Loading, thinking and empty states. The agent is slow by nature — it is doing
@@ -36,22 +35,6 @@ export function AccountSkeleton({ i }: { i: number }) {
   );
 }
 
-/** What the agent is doing right now, wrapped in a live border beam. */
-export function ThinkingCard({ label, detail }: { label: string; detail?: string }) {
-  return (
-    <BorderBeam size="sm" colorVariant="ocean" theme="auto" borderRadius={14} strength={0.85} duration={5}>
-      <div className="flex items-center gap-2.5 rounded-card bg-surface px-3 py-2.5">
-        <span className="relative flex size-4 shrink-0 items-center justify-center">
-          <span className="absolute inset-0 rounded-full bg-accent/30" style={{ animation: "pulse-ring 1.6s ease-out infinite" }} />
-          <span className="size-1.5 rounded-full bg-accent" />
-        </span>
-        <span className="text-[12.5px] font-medium text-ink">{label}</span>
-        {detail && <span className="truncate font-mono text-[11px] text-ink-3">{detail}</span>}
-      </div>
-    </BorderBeam>
-  );
-}
-
 /** Tool calls as chips, with the in-flight one still pulsing. */
 export function ToolTrace({ calls }: { calls: { id: string; name: string; summary?: string }[] }) {
   if (!calls.length) return null;
@@ -80,9 +63,9 @@ export function ToolTrace({ calls }: { calls: { id: string; name: string; summar
 export function ConnectorRow({ c }: { c: { id: string; name: string; direction: string; configured: boolean } }) {
   return (
     <div className="group flex items-center gap-2 rounded-[8px] px-1.5 py-1.5 transition-colors duration-150 hover:bg-hover-2">
-      <span className={cn("flex size-4 shrink-0 items-center justify-center transition-opacity duration-200 [&_svg]:size-4",
+      <span className={cn("flex size-4 shrink-0 items-center justify-center transition-opacity duration-200",
         !c.configured && "opacity-35 grayscale")}>
-        {CONNECTOR_MARKS[c.id]}
+        <BrandMark id={c.id} size={15} />
       </span>
       <span className={cn("min-w-0 flex-1 truncate text-[12px]", c.configured ? "text-ink" : "text-ink-3")}>{c.name}</span>
       <span className="font-mono text-[9px] tracking-tight text-ink-3 opacity-0 transition-opacity duration-150 group-hover:opacity-100">

@@ -18,7 +18,7 @@ import type { ExecutedAction, Plan, PolicyDecision, ProposedAction } from "../ty
 import { SYSTEM_PROMPT } from "./system-prompt";
 import { buildTools, type ProposalSink } from "./tools";
 
-export const MODEL = process.env.BACKSTOP_MODEL ?? "claude-opus-5";
+export const MODEL = process.env.KEEL_MODEL ?? "claude-opus-5";
 
 export type AgentEvent =
   | { type: "run_started"; runId: string; at: string }
@@ -75,8 +75,8 @@ export type Emit = (e: AgentEvent) => void;
 
 /* ── pending-approval store ────────────────────────────────────────────── */
 
-const PENDING_PATH = join(process.cwd(), ".backstop", "pending.json");
-const COMPLETED_PATH = join(process.cwd(), ".backstop", "completed.json");
+const PENDING_PATH = join(process.cwd(), ".keel", "pending.json");
+const COMPLETED_PATH = join(process.cwd(), ".keel", "completed.json");
 type Pending = Record<string, { plan: Plan; runId: string }>;
 
 function readPending(): Pending {

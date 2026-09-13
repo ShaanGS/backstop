@@ -1,7 +1,7 @@
 /**
  * Connector credential detection.
  *
- * Backstop degrades gracefully: a connector without credentials is reported as
+ * Keel degrades gracefully: a connector without credentials is reported as
  * unconfigured rather than throwing, so the console always boots and the README
  * setup path is forgiving. Every *write* connector re-checks before acting.
  */
@@ -60,5 +60,5 @@ export function connectorStatus() {
   }));
 }
 
-/** Live mode performs real writes. Set BACKSTOP_DRY_RUN=1 to trace without writing. */
-export const isDryRun = () => process.env.BACKSTOP_DRY_RUN === "1";
+/** Live mode performs real writes. Set KEEL_DRY_RUN=1 to trace without writing. */
+export const isDryRun = () => process.env.KEEL_DRY_RUN === "1";

@@ -207,14 +207,18 @@ body {
   }
 }
 
-/* a word resolving out of blur as the model streams it */
-@keyframes word-in {
-  from { opacity: 0; filter: blur(3px); }
-  to   { opacity: 1; filter: blur(0); }
-}
 @keyframes caret {
   50% { opacity: 0; }
 }
 @keyframes shimmer {
   100% { transform: translateX(100%); }
+}
+
+@keyframes pixel-on {
+  0%, 100% { opacity: 0.15; }
+  50%      { opacity: 1; }
+}
+@keyframes shimmer-text {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }

@@ -1,5 +1,5 @@
 /**
- * The deterministic half of Backstop.
+ * The deterministic half of Keel.
  *
  * The model proposes a plan; this module decides what actually happens. Every
  * write passes through the same five gates in the same order:
@@ -36,7 +36,7 @@ export type ExecResult = { externalId: string; externalUrl?: string; note?: stri
  * deterministically and without API keys; `pnpm eval --live` turns it off and
  * exercises the same code against the real apps.
  */
-const isSink = () => process.env.BACKSTOP_SINK === "1";
+const isSink = () => process.env.KEEL_SINK === "1";
 
 /** Performs one action against its real external app. */
 async function perform(
@@ -63,7 +63,7 @@ async function perform(
         title,
         description: `${p.description}\n\n---\n**Evidence**\n${snapshot.evidence
           .map((e) => `- ${e.source.toUpperCase()} · ${e.label}: ${e.detail}`)
-          .join("\n")}\n\n_Opened automatically by Backstop (plan ${plan.id})._`,
+          .join("\n")}\n\n_Opened automatically by Keel (plan ${plan.id})._`,
         priority: Number(p.priority ?? 2),
       });
       return { externalId: issue.id, externalUrl: issue.url, note: issue.identifier };
@@ -181,7 +181,7 @@ export async function executePlan(
     if (isDryRun()) {
       const result: ExecutedAction = {
         type: action.type, summary: action.summary, status: "skipped_idempotent",
-        idempotencyKey: key, reason: "BACKSTOP_DRY_RUN=1 — write suppressed.", attempts: 0,
+        idempotencyKey: key, reason: "KEEL_DRY_RUN=1 — write suppressed.", attempts: 0,
       };
       out.push(result);
       opts.onEvent?.({ type: "action_result", index, action, result });

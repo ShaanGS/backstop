@@ -23,7 +23,7 @@ export async function postAlert(alert: SlackAlert): Promise<{ ts: string; url: s
   const channel = process.env.SLACK_CHANNEL_ID!;
   const res = await slack().chat.postMessage({
     channel,
-    text: `Backstop: save play executed for ${alert.accountName}`,
+    text: `Keel: save play executed for ${alert.accountName}`,
     blocks: [
       {
         type: "header",
@@ -41,7 +41,7 @@ export async function postAlert(alert: SlackAlert): Promise<{ ts: string; url: s
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*Actions taken by Backstop*\n${alert.actions.map((a) => `• ${a}`).join("\n")}`,
+          text: `*Actions taken by Keel*\n${alert.actions.map((a) => `• ${a}`).join("\n")}`,
         },
       },
       {

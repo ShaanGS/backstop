@@ -1,7 +1,7 @@
 /**
  * Account registry and signal assembly.
  *
- * `data/accounts.json` is Backstop's own first-party CRM + product-telemetry
+ * `data/accounts.json` is Keel's own first-party CRM + product-telemetry
  * store — the same data a real vendor would hold in its own database. Billing
  * and support signals are NOT read from here: they are fetched live from Stripe
  * and Linear at snapshot time. This file only supplies the registry, the
@@ -17,7 +17,7 @@ import type { Account, BillingSignal, Evidence, Ticket, UsageSignal } from "./ty
 
 export type SeedAccount = (typeof accountsRaw)[number];
 
-const MAP_PATH = join(process.cwd(), ".backstop", "seed-map.json");
+const MAP_PATH = join(process.cwd(), ".keel", "seed-map.json");
 
 export type SeedMap = Record<string, { stripeCustomerId?: string; linearIssueIds?: string[] }>;
 

@@ -1,13 +1,13 @@
 /**
- * Backstop reliability suite.
+ * Keel reliability suite.
  *
  * Each case pins a synthetic account state and a proposed plan, then drives the
  * REAL pipeline — the same `evaluatePolicy` and `executePlan` the product runs —
  * and asserts on what actually happened.
  *
  *   pnpm eval          fixture mode: the third-party network boundary is stubbed
- *                      (BACKSTOP_SINK=1) so the suite is deterministic, fast and
- *                      runnable with no API keys. Every Backstop gate still runs.
+ *                      (KEEL_SINK=1) so the suite is deterministic, fast and
+ *                      runnable with no API keys. Every Keel gate still runs.
  *   pnpm eval --live   the same cases with the stub removed, writing to the real
  *                      Stripe / Linear / Slack / Notion / Resend workspaces.
  *
@@ -17,7 +17,7 @@
 import "../scripts/load-env";
 
 const LIVE = process.argv.includes("--live");
-if (!LIVE) process.env.BACKSTOP_SINK = "1";
+if (!LIVE) process.env.KEEL_SINK = "1";
 
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -175,7 +175,7 @@ async function runCase(c: Case) {
 
 async function main() {
   const mode = LIVE ? "LIVE (real external writes)" : "fixture (network boundary stubbed)";
-  console.log(`\n  Backstop reliability suite — ${mode}\n`);
+  console.log(`\n  Keel reliability suite — ${mode}\n`);
 
   const results = [];
   for (const c of cases as Case[]) {
@@ -195,7 +195,7 @@ async function main() {
   console.log(`\n  ${passed}/${results.length} cases passed · ${mustNotPassed}/${mustNot.length} must-not-act cases passed\n`);
 
   const report = [
-    `# Backstop reliability report`,
+    `# Keel reliability report`,
     ``,
     `Generated ${new Date().toISOString()} · mode: **${mode}** · model-independent (policy and execution gates only).`,
     ``,

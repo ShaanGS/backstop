@@ -1,4 +1,4 @@
-# Backstop reliability report
+# Keel reliability report
 
 Generated 2026-09-13T19:51:46.056Z · mode: **fixture (network boundary stubbed)** · model-independent (policy and execution gates only).
 

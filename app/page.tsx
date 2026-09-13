@@ -6,7 +6,8 @@ import AgentProse from "@/components/agent-prose";
 import Composer, { type MentionAccount } from "@/components/composer";
 import { AccountCard, ApprovalGate, PolicyPanel, type AccountRow } from "@/components/run-panels";
 import CaseFile, { Receipts } from "@/components/case-file";
-import { AccountSkeleton, ConnectorRow, ThinkingCard, ToolTrace } from "@/components/states";
+import { AccountSkeleton, ConnectorRow, ToolTrace } from "@/components/states";
+import LoadingState from "@/components/loading-state";
 import { Glyph, PATHS } from "@/components/icons";
 import { Wordmark } from "@/components/brand";
 import { cn } from "@/lib/utils";
@@ -58,7 +59,7 @@ export default function Console() {
   /* ── boot ─────────────────────────────────────────────────────────── */
 
   useEffect(() => {
-    try { setTheme((localStorage.getItem("backstop-theme") as "light" | "dark") ?? null); } catch {}
+    try { setTheme((localStorage.getItem("keel-theme") as "light" | "dark") ?? null); } catch {}
     fetch("/api/connectors").then((r) => r.json()).then((d) => {
       setConnectors(d.connectors); setModelReady(d.modelReady);
     }).catch(() => {});
@@ -76,7 +77,7 @@ export default function Console() {
     const next = (theme ?? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")) === "dark" ? "light" : "dark";
     setTheme(next);
     document.documentElement.setAttribute("data-theme", next);
-    try { localStorage.setItem("backstop-theme", next); } catch {}
+    try { localStorage.setItem("keel-theme", next); } catch {}
   }
 
   /* ── live timer on the running turn ───────────────────────────────── */
@@ -221,7 +222,7 @@ export default function Console() {
           </div>
         </div>
 
-        <a href="https://github.com/ShaanGS/backstop" target="_blank" rel="noreferrer"
+        <a href="https://github.com/ShaanGS/keel" target="_blank" rel="noreferrer"
           className="flex items-center gap-2 border-t border-line px-4 py-2.5 text-[11.5px] text-ink-3 transition-colors hover:text-ink">
           <Glyph d={PATHS.doc} size={12} />
           <span className="animated-underline">14/14 reliability cases</span>
@@ -283,10 +284,15 @@ function TurnView({ t, onDecide, onReplay, isLast }: {
         </p>
       </div>
 
-      {thinking && (
-        <ThinkingCard
-          label={lastTool && !lastTool.summary ? "Reading external apps" : "Investigating"}
-          detail={lastTool?.name}
+      {(t.phase === "investigating" || t.phase === "executing") && (
+        <LoadingState
+          label={
+            t.phase === "executing" ? "Executing the play"
+            : lastTool && !lastTool.summary ? "Reading external apps"
+            : "Investigating"
+          }
+          detail={lastTool && !lastTool.summary ? lastTool.name : undefined}
+          startedAt={t.startedAt}
         />
       )}
 
@@ -428,7 +434,7 @@ function Welcome({ connectors, modelReady, hint, onPick }: {
       <div>
         <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-ink">Who is quietly about to churn?</h2>
         <p className="mt-1.5 max-w-[56ch] text-[13.5px] leading-relaxed text-ink-2">
-          Backstop reads live billing from Stripe, support tickets from Linear and first-party usage
+          Keel reads live billing from Stripe, support tickets from Linear and first-party usage
           telemetry, decides which account is genuinely at risk, then runs a policy-gated recovery
           play — re-reading every app afterwards to prove the work landed.
         </p>

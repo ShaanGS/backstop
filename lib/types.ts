@@ -1,4 +1,4 @@
-/** Core domain types for Backstop. */
+/** Core domain types for Keel. */
 
 export type ConnectorId = "stripe" | "linear" | "slack" | "notion" | "resend";
 

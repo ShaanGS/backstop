@@ -1,0 +1,36 @@
+{
+  "6a23c96b841dc66054c5e8dd0dc3ff79": {
+    "key": "6a23c96b841dc66054c5e8dd0dc3ff79",
+    "accountId": "acc_acme",
+    "actionType": "create_linear_issue",
+    "planId": "plan_mu08qxx8xcr9",
+    "externalId": "78f0efbe-419c-4ebf-822a-40254645a587",
+    "externalUrl": "https://linear.app/marlloz/issue/MAR-17/acme-robotics-acme-robotics-save-play-renewal-in-12-days-seats",
+    "executedAt": "2026-09-13T20:03:15.746Z"
+  },
+  "25f57569cd79a12915ef7785cc1ad0c5": {
+    "key": "25f57569cd79a12915ef7785cc1ad0c5",
+    "accountId": "acc_acme",
+    "actionType": "send_customer_email",
+    "planId": "plan_mu08qxx8xcr9",
+    "externalId": "413927b2-c010-4b61-b8a9-1c082d8fd960",
+    "executedAt": "2026-09-13T20:03:17.504Z"
+  },
+  "64851bbd2defe7659e5c4f6d5459e24a": {
+    "key": "64851bbd2defe7659e5c4f6d5459e24a",
+    "accountId": "acc_acme",
+    "actionType": "create_linear_issue",
+    "planId": "plan_mu08so5y6k14",
+    "externalId": "bd968ee6-da86-45fa-8d8e-aad775b9672c",
+    "externalUrl": "https://linear.app/marlloz/issue/MAR-18/acme-robotics-acme-robotics-save-play-escalate-mar-5-sso-loop-recover",
+    "executedAt": "2026-09-13T20:05:01.549Z"
+  },
+  "03df1415bdfb08265b31cdc9f5b63d73": {
+    "key": "03df1415bdfb08265b31cdc9f5b63d73",
+    "accountId": "acc_acme",
+    "actionType": "send_customer_email",
+    "planId": "plan_mu08so5y6k14",
+    "externalId": "55181446-8e0a-4045-8f34-4ddd1193cc71",
+    "executedAt": "2026-09-13T20:05:03.214Z"
+  }
+}

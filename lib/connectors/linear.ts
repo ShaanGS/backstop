@@ -10,9 +10,9 @@ export function linear(): LinearClient {
   return client;
 }
 
-/** Label applied to every issue Backstop opens, so its own work is never
+/** Label applied to every issue Keel opens, so its own work is never
  *  mistaken for a customer-reported problem on the next run. */
-export const RECOVERY_LABEL = "backstop-recovery";
+export const RECOVERY_LABEL = "keel-recovery";
 
 /** Issues are namespaced per account by a `[Account Name]` title prefix. */
 export function titlePrefix(accountName: string) {
@@ -29,7 +29,7 @@ export async function getTickets(accountName: string): Promise<Ticket[]> {
   for (const issue of res.nodes) {
     const [state, labels] = await Promise.all([issue.state, issue.labels()]);
     const names = labels.nodes.map((n) => n.name);
-    // Exclude Backstop's own recovery tasks: they are the output of a previous
+    // Exclude Keel's own recovery tasks: they are the output of a previous
     // run, not evidence of customer pain, and counting them would let the agent
     // escalate an account on the strength of its own earlier actions.
     if (names.includes(RECOVERY_LABEL)) continue;

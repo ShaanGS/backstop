@@ -3,7 +3,7 @@
  *
  * This writes REAL objects into Stripe test mode and Linear: customers,
  * subscriptions with controlled renewal dates, a genuinely failed invoice, and
- * labelled support tickets. Backstop then reads all of it back over the live
+ * labelled support tickets. Keel then reads all of it back over the live
  * APIs — nothing about the signal path is mocked.
  *
  * Safe to re-run: every object is looked up before it is created.
@@ -27,21 +27,21 @@ function log(icon: string, msg: string) {
  */
 async function priceFor(acc: { id: string; plan: string; seats: number; mrrCents: number }): Promise<string> {
   const existing = await stripe.prices.search({
-    query: `metadata['backstop_account_id']:'${acc.id}' AND active:'true'`,
+    query: `metadata['keel_account_id']:'${acc.id}' AND active:'true'`,
     limit: 1,
   }).catch(() => ({ data: [] as Stripe.Price[] }));
   if (existing.data.length) return existing.data[0].id;
 
   const product = await stripe.products.create({
-    name: `Backstop ${acc.plan} — ${acc.seats} seats`,
-    metadata: { backstop_account_id: acc.id },
+    name: `Keel ${acc.plan} — ${acc.seats} seats`,
+    metadata: { keel_account_id: acc.id },
   });
   const price = await stripe.prices.create({
     product: product.id,
     currency: "usd",
     unit_amount: acc.mrrCents,
     recurring: { interval: "month" },
-    metadata: { backstop_account_id: acc.id },
+    metadata: { keel_account_id: acc.id },
   });
   return price.id;
 }
@@ -67,7 +67,7 @@ async function seedStripe(map: SeedMap) {
         name: acc.name,
         email: acc.contact.email,
         description: `${acc.plan} plan · ${acc.seats} seats · owned by ${acc.owner.name}`,
-        metadata: { backstop_account_id: acc.id, domain: acc.domain, tags: acc.tags.join(",") },
+        metadata: { keel_account_id: acc.id, domain: acc.domain, tags: acc.tags.join(",") },
       });
       customerId = customer.id;
       log("+", `Stripe customer ${customer.id} — ${acc.name}`);
@@ -100,7 +100,7 @@ async function seedStripe(map: SeedMap) {
         billing_cycle_anchor: Math.floor(Date.now() / 1000) + Math.min(acc.renewalInDays, 28) * DAY,
         proration_behavior: "none",
         payment_behavior: "allow_incomplete",
-        metadata: { backstop_account_id: acc.id },
+        metadata: { keel_account_id: acc.id },
       });
       log("+", `  subscription $${(acc.mrrCents / 100).toLocaleString()}/mo, renews in ${acc.renewalInDays}d`);
     }
@@ -123,7 +123,7 @@ async function seedStripe(map: SeedMap) {
           // Stripe excludes pending invoice items by default; without this the
           // invoice finalises at $0 and auto-pays, and there is no failure to find.
           pending_invoice_items_behavior: "include",
-          metadata: { backstop_account_id: acc.id },
+          metadata: { keel_account_id: acc.id },
         });
         await stripe.invoices.finalizeInvoice(invoice.id!);
         try {
@@ -176,7 +176,7 @@ async function seedLinear(map: SeedMap) {
       const created = await linear.createIssue({
         teamId: team.id,
         title,
-        description: `Reported by ${acc.contact.name} (${acc.contact.role}) at ${acc.name}.\n\nOpened ${ticket.ageDays} days ago. Seeded by Backstop for the multi-app agent demo.`,
+        description: `Reported by ${acc.contact.name} (${acc.contact.role}) at ${acc.name}.\n\nOpened ${ticket.ageDays} days ago. Seeded by Keel for the multi-app agent demo.`,
         priority: ticket.labels.includes("escalation") ? 1 : 2,
         labelIds: await Promise.all(ticket.labels.map(labelId)),
       });
@@ -192,12 +192,12 @@ async function seedLinear(map: SeedMap) {
 }
 
 async function main() {
-  console.log("\n  Backstop — seeding external apps\n");
+  console.log("\n  Keel — seeding external apps\n");
   const map = readSeedMap();
   await seedStripe(map);
   await seedLinear(map);
   writeSeedMap(map);
-  console.log(`\n  Done. Seed map written to .backstop/seed-map.json\n`);
+  console.log(`\n  Done. Seed map written to .keel/seed-map.json\n`);
 }
 
 main().catch((err) => {

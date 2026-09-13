@@ -9,7 +9,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import type { AuditEvent } from "./types";
 
-const AUDIT_PATH = join(process.cwd(), ".backstop", "audit.jsonl");
+const AUDIT_PATH = join(process.cwd(), ".keel", "audit.jsonl");
 
 function ensureDir(path: string) {
   const dir = dirname(path);

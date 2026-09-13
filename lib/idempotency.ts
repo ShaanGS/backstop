@@ -11,7 +11,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import type { ActionType } from "./types";
 
-const LEDGER_PATH = join(process.cwd(), ".backstop", "actions.json");
+const LEDGER_PATH = join(process.cwd(), ".keel", "actions.json");
 
 export type LedgerEntry = {
   key: string;

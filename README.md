@@ -1,6 +1,6 @@
 <div align="center">
 
-# Backstop
+# Keel
 
 **An autonomous revenue-retention agent that is trusted to take irreversible business actions — because every one of them is policy-checked, idempotent, approved, and verified by reading the app back.**
 
@@ -25,7 +25,7 @@ open the task, write the plan, send the email, book the follow-up, and tell the 
 It is roughly forty minutes of cross-app grind per account, which is exactly why it does not
 happen until the quarter is already lost.
 
-**Backstop does that work.** Not a dashboard that tells you an account is at risk — an agent that
+**Keel does that work.** Not a dashboard that tells you an account is at risk — an agent that
 investigates the account across five apps and then actually runs the recovery play.
 
 ## Why this is hard, and what most agents get wrong
@@ -39,13 +39,70 @@ interesting question stops being "can it do the work" and becomes:
 - What stops a retry, a page refresh, or a re-run from sending the same customer a second email?
 - When it says it created the task — did it? Or did the API return 500 and the model narrate success?
 
-Backstop's answer is an architecture, not a prompt.
+Keel's answer is an architecture, not a prompt.
 
 ## Architecture
 
 > The model proposes. The runtime disposes.
 
-<img src="docs/architecture.svg" alt="Backstop architecture: a model-driven read-only investigation phase feeding a fully deterministic execution pipeline of policy, approval, idempotency, execute, verify and audit." width="100%">
+```mermaid
+flowchart TB
+    A["<b>claude-opus-5</b><br/>streamText tool loop"]
+    A --> B["list_accounts"]
+    A --> C["get_account_snapshot"]
+    C --> D(["Stripe<br/>billing · renewal · failed payments"])
+    C --> E(["Linear<br/>tickets · escalations"])
+    C --> F(["Usage telemetry<br/>first-party"])
+    A --> G["<b>propose_save_play</b><br/>the only terminal tool"]
+
+    G ==>|"a Plan — not an action"| H
+
+    H["<b>Policy engine</b><br/>5 deterministic rules"] --> I{"Needs a<br/>human?"}
+    I -->|yes| J["Approval gate<br/>plan-level"]
+    I -->|no| K["<b>Idempotency ledger</b><br/>sha256 action key"]
+    J -->|approved| K
+    J -->|rejected| X["Nothing runs"]
+    K -->|"key unseen"| L["Execute<br/>1 retry"]
+    K -->|"key seen"| M["Skip<br/>no duplicate"]
+    L --> N["<b>Verify</b><br/>re-read by id"]
+    N --> O(["Linear · Notion · Resend · Slack"])
+    N --> P[["Append-only audit log"]]
+
+    subgraph PH1 [" PHASE 1 — investigation · model-driven · read-only "]
+        A
+        B
+        C
+        D
+        E
+        F
+        G
+    end
+
+    subgraph PH2 [" PHASE 2 — execution · deterministic · the model is never consulted again "]
+        H
+        I
+        J
+        K
+        L
+        M
+        N
+        X
+        P
+    end
+
+    classDef model fill:#eeecfd,stroke:#5a50e0,stroke-width:1.5px,color:#16171a
+    classDef gate fill:#fdf1e0,stroke:#b45309,stroke-width:1.5px,color:#16171a
+    classDef safe fill:#e3f5ec,stroke:#14804a,stroke-width:1.5px,color:#16171a
+    classDef stop fill:#fce9ea,stroke:#c6303b,stroke-width:1.5px,color:#16171a
+    classDef app fill:#f3f3f1,stroke:#d6d3cd,color:#16171a
+
+    class A,G model
+    class I,J gate
+    class K,N,M safe
+    class X stop
+    class D,E,F,O,P app
+```
+
 
 **Phase 1 is genuinely agentic.** The model is handed read-only tools and left alone. It decides
 which accounts to open, how deep to dig, when it has enough evidence, and what the play should be.
@@ -87,13 +144,13 @@ engine refuse it — defence in depth you can see working.
 | `ENTERPRISE_APPROVAL` | MRR > $5,000/mo | **Every** action requires human approval. Never automatic. |
 | `CUSTOMER_CONTACT_APPROVAL` | plan contains customer-visible outreach | A human signs off before anything the customer sees. Default posture, any account size. |
 
-Approval is **plan-level on purpose**: a save play is approved or it is not. Backstop never
+Approval is **plan-level on purpose**: a save play is approved or it is not. Keel never
 half-executes a recovery sequence.
 
 ### Replay vs. re-investigate — a distinction worth being precise about
 
 Idempotency here means **replay safety**, not "never act on this account twice". The two are
-different and Backstop treats them differently:
+different and Keel treats them differently:
 
 - **Replaying a plan** — same plan id, so the same action keys — performs **zero** writes. A
   retry, a double-click, a page refresh, or a crashed process resuming cannot produce a second
@@ -110,13 +167,13 @@ Conflating the two would give a comfortable demo and the wrong system.
 
 Five connectors are implemented. **The recorded demo runs with three of them credentialed —
 Stripe, Linear and Resend** — which is what the two-minute video shows end to end. Notion and
-Slack are fully implemented and need only their environment variables; Backstop detects which
+Slack are fully implemented and need only their environment variables; Keel detects which
 connectors are configured and drops unavailable actions from the plan rather than failing on
 them, so the agent's behaviour degrades cleanly.
 
 Every write is verified by a read-back against the app's own API.
 
-| App | Direction | What Backstop does with it | Verified by | Status |
+| App | Direction | What Keel does with it | Verified by | Status |
 |---|---|---|---|---|
 | **Stripe** (test mode) | read | MRR, subscription status, renewal date, uncollected invoices | — | ✅ in demo |
 | **Linear** | read + write | Reads open tickets and escalations; creates the recovery task | `linear.issue(id)` re-fetch + title match | ✅ in demo |
@@ -124,7 +181,7 @@ Every write is verified by a read-back against the app's own API.
 | **Resend** | write | Sends the tailored customer email | `emails.get(id)`, asserts delivery status | ✅ in demo |
 | **Slack** | write | Block Kit alert to the account owner with the evidence | `chat.getPermalink(ts)` re-resolve | implemented |
 
-Product-usage telemetry (weekly active seats) is Backstop's own first-party data in
+Product-usage telemetry (weekly active seats) is Keel's own first-party data in
 [`data/accounts.json`](data/accounts.json) — as it would be for any real vendor. Billing and
 support signals are **not** read from there: they are fetched live from Stripe and Linear on every
 run. `pnpm seed` writes the demo tenancy *into* those apps; the agent then reads it *back out* over
@@ -135,8 +192,8 @@ the real APIs.
 Requires Node 20+ and pnpm. Total setup is about ten minutes, most of it creating free accounts.
 
 ```bash
-git clone https://github.com/ShaanGS/backstop.git
-cd backstop
+git clone https://github.com/ShaanGS/keel.git
+cd keel
 pnpm install
 cp .env.example .env.local
 ```
@@ -150,11 +207,11 @@ Fill in `.env.local`:
 | `LINEAR_API_KEY` | Linear → Settings → Security & access → Personal API keys | 1 min |
 | `NOTION_API_KEY` + `NOTION_PARENT_PAGE_ID` | [notion.so/my-integrations](https://www.notion.so/my-integrations), then **share a page with the integration**. The page id is the 32-char hex in its URL. | 3 min |
 | `RESEND_API_KEY` | [resend.com](https://resend.com) → API keys | 1 min |
-| `SLACK_BOT_TOKEN` + `SLACK_CHANNEL_ID` | [api.slack.com/apps](https://api.slack.com/apps) → create app → OAuth & Permissions → add **`chat:write`** bot scope → install to workspace → copy `xoxb-…`. Then `/invite @Backstop` in the channel and copy its id from the channel's URL. | 5 min |
+| `SLACK_BOT_TOKEN` + `SLACK_CHANNEL_ID` | [api.slack.com/apps](https://api.slack.com/apps) → create app → OAuth & Permissions → add **`chat:write`** bot scope → install to workspace → copy `xoxb-…`. Then `/invite @Keel` in the channel and copy its id from the channel's URL. | 5 min |
 
 > **`RESEND_TO_OVERRIDE` is a safety valve, not a workaround.** With it set, every customer email is
 > redirected to that address, the intended recipient is preserved in the subject and an
-> `X-Backstop-Intended-Recipient` header, and the email body says so. Without a verified sending
+> `X-Keel-Intended-Recipient` header, and the email body says so. Without a verified sending
 > domain Resend only delivers to your own address anyway — but this is the posture we would ship
 > with in any non-production environment regardless, and it is why the demo can run against
 > realistic accounts with zero chance of mailing a real person.
@@ -173,8 +230,8 @@ pnpm dev    # http://localhost:3100
 Useful flags:
 
 ```bash
-BACKSTOP_DRY_RUN=1 pnpm dev   # trace the whole pipeline, perform no external writes
-BACKSTOP_MODEL=claude-sonnet-5 pnpm dev
+KEEL_DRY_RUN=1 pnpm dev   # trace the whole pipeline, perform no external writes
+KEEL_MODEL=claude-sonnet-5 pnpm dev
 ```
 
 ## How I tested and verified it works
@@ -216,8 +273,8 @@ Full generated scorecard: **[`evals/REPORT.md`](evals/REPORT.md)**.
 **Two modes, and the difference is stated plainly rather than hidden:**
 
 ```bash
-pnpm eval          # fixture mode — BACKSTOP_SINK=1 stubs ONLY the third-party
-                   # network boundary. Every Backstop gate (policy, idempotency,
+pnpm eval          # fixture mode — KEEL_SINK=1 stubs ONLY the third-party
+                   # network boundary. Every Keel gate (policy, idempotency,
                    # retry, verification wiring, ledger) still runs for real.
                    # Deterministic, fast, needs no API keys, CI-able.
 
@@ -273,7 +330,7 @@ Then the adversarial checks:
 - **Run against the `do-not-contact` account** → `0 executed, 4 blocked`, reason recorded in the timeline.
 - **Kill a connector mid-run** (revoke the Linear key) → the action retries once, fails honestly,
   and is reported as `failed` rather than silently swallowed.
-- **`cat .backstop/audit.jsonl`** → every read, decision, policy evaluation, action and
+- **`cat .keel/audit.jsonl`** → every read, decision, policy evaluation, action and
   verification is present, in order, with timestamps.
 
 ### 3. Types and lint
@@ -317,7 +374,7 @@ app/              Next.js 16 console — streaming NDJSON, no polling
 
 Next.js 16 · React 19 · TypeScript · Vercel AI SDK v6 (`streamText` + tool loop) ·
 `claude-opus-5` · Tailwind v4 with a hand-built token layer · official SDKs for all five apps.
-No database — state is durable JSON under `.backstop/`, which keeps the clone-to-running path
+No database — state is durable JSON under `.keel/`, which keeps the clone-to-running path
 at two commands.
 
 ## Honest limitations
@@ -326,7 +383,7 @@ at two commands.
   database and your own product analytics; the agent's interface to them would not change.
 - Quiet-hours deferral is specified in the policy design but not implemented — the four other
   rules are, and are tested.
-- Approval lives in Backstop's own UI rather than Slack interactivity, which avoids needing a
+- Approval lives in Keel's own UI rather than Slack interactivity, which avoids needing a
   public webhook. Slack is notify-only.
 - Single-tenant, single-workspace. There is no auth on the console.
 
