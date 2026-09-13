@@ -209,12 +209,10 @@ the real APIs.
 
 | | |
 |---|---|
-| ![The console mid-investigation](docs/investigating.png) | ![The case file](docs/case-file.png) |
-| The agent reading six accounts across Stripe, Linear and telemetry. Tool cards open while a call is in flight and fold away when it lands. | What it found — risk as a meter, the numbers as hero figures, and the seat collapse against the baseline it fell away from. |
-| ![The approval gate](docs/approval.png) | ![Receipts](docs/receipts.png) |
-| Customer-visible outreach stops here regardless of account size. The policy verdict that put it there is shown above it. | Every action with its external id, a link to the real record, and whether the read-back verified it. |
-| ![The ledger](docs/ledger.png) | |
-| Everything Keel has ever done, rebuilt from the audit trail on disk rather than from the session. Refusals and suppressed duplicates are rows too. | |
+| ![The Keel console](docs/console.png) | |
+| **The console.** Five connected apps down the left with what each one is for, the book of business ranked by risk, and the agent's answer in the middle. Every figure the agent states carries a citation back to the record it came from. | |
+| ![The landing page](docs/landing.png) | |
+| **The product page.** Served by the same app, from the same design tokens — [keel-nine-flame.vercel.app](https://keel-nine-flame.vercel.app). | |
 
 ## Setup
 
