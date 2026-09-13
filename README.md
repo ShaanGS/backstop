@@ -4,7 +4,7 @@
 
 <br>
 
-**An autonomous revenue-retention agent trusted to take irreversible business actions — because every one of them is policy-checked, idempotent, approved, and verified by reading the app back.**
+**Your churn dashboard tells you a customer is at risk. It never tells you *why* — because the symptom and the cause are never in the same tool. Keel finds the why across five apps, acts on it, and proves every action by reading the app back.**
 
 [![reliability suite](https://github.com/ShaanGS/keel/actions/workflows/ci.yml/badge.svg)](https://github.com/ShaanGS/keel/actions/workflows/ci.yml)
 [![14/14 cases](https://img.shields.io/badge/reliability-14%2F14_cases-14804a?labelColor=1c1c1f)](evals/REPORT.md)
@@ -20,6 +20,25 @@ Built for the [Multi-App AI Agent Hackathon](https://multiappagenthackathon.com)
 </div>
 
 ---
+
+## Check the claim yourself — 30 seconds, no API keys
+
+```bash
+git clone https://github.com/ShaanGS/keel && cd keel
+pnpm install && pnpm eval
+```
+
+```
+14/14 cases passed · 5/5 must-not-act cases passed
+```
+
+Fixture mode stubs **only** the third-party network boundary. Every Keel gate — policy,
+idempotency, retry, read-back verification, ledger — executes for real, which is why this runs
+in CI on every push with no credentials configured.
+
+Five of those fourteen assert that Keel does **nothing**: on a legal hold, inside a contact
+cooldown, above an enterprise approval threshold, against an open escalation, and on a replay
+of work already done. [Full scorecard →](evals/REPORT.md)
 
 ## The problem
 
