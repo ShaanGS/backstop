@@ -81,7 +81,7 @@ export function UsageChart({ series, baseline }: { series: number[]; baseline: n
   const [hover, setHover] = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
-  const { pts, path, area, yBase, min, max } = useMemo(() => {
+  const { pts, path, area, yBase } = useMemo(() => {
     const lo = Math.min(...series, baseline), hi = Math.max(...series, baseline);
     const pad = (hi - lo) * 0.18 || 1;
     const min = lo - pad, max = hi + pad;

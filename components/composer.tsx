@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { CONNECTOR_MARKS, Glyph, PATHS } from "./icons";
+import { Glyph, PATHS } from "./icons";
 import { cn, money } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────
@@ -54,6 +54,9 @@ export default function Composer({
         ? COMMANDS.filter((c) => c.name.slice(1).startsWith(query)).map((c) => ({ key: c.name, name: c.name, desc: c.desc, account: undefined }))
         : [];
 
+  // Resetting the highlight when the menu changes is the point; the extra
+  // render is one frame and never user-visible.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setActive(0); setEngaged(false); }, [menu, query]);
 
   // A single highlight glides between rows instead of each row toggling.

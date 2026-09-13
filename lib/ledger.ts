@@ -7,6 +7,8 @@
  * needs already exist: the append-only audit trail and the idempotency ledger.
  * Nothing here writes; it only reads what execution already committed.
  */
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { readAudit } from "./audit";
 import { listAccounts } from "./store";
 import type { ActionType, AuditEvent, ConnectorId } from "./types";
@@ -140,8 +142,6 @@ export function readLedger(): { entries: LedgerEntry[]; summary: LedgerSummary }
  */
 export function readEvalScore(): { passed: number; total: number; mustNot: number } | null {
   try {
-    const { readFileSync } = require("node:fs") as typeof import("node:fs");
-    const { join } = require("node:path") as typeof import("node:path");
     const md = readFileSync(join(process.cwd(), "evals", "REPORT.md"), "utf8");
     const m = md.match(/\*\*(\d+)\/(\d+) cases passed\*\*[\s\S]*?\*\*(\d+)\/\d+ must-not-act/);
     if (!m) return null;

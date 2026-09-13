@@ -28,6 +28,9 @@ function useTyping(text: string, live: boolean): boolean {
   const [typing, setTyping] = useState(false);
   const first = useRef(true);
   useEffect(() => {
+    // The caret's solid/blinking state is derived from stream activity, so an
+    // extra render per chunk is the mechanism, not a mistake.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!live) { setTyping(false); return; }
     if (first.current) { first.current = false; return; }
     setTyping(true);

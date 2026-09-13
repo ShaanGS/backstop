@@ -3,7 +3,6 @@
 import { CONNECTOR_MARKS, Glyph, PATHS } from "./icons";
 import { cn, money, pct } from "@/lib/utils";
 import type { Evidence, PolicyDecision, ProposedAction } from "@/lib/types";
-import type { SnapshotDTO } from "@/lib/agent/loop";
 
 /* ── the agent's reasoning, streamed ─────────────────────────────────────── */
 
@@ -244,11 +243,3 @@ export function AccountCard({ a, active, onClick }: { a: AccountRow; active: boo
 }
 
 
-function Tag({ tone, children }: { tone: "red" | "amber"; children: React.ReactNode }) {
-  return (
-    <span className={cn("inline-flex h-4.5 items-center rounded-full px-1.5 font-mono text-[10px] font-medium",
-      tone === "red" ? "bg-red-tint text-red" : "bg-amber-tint text-amber")}>
-      {children}
-    </span>
-  );
-}

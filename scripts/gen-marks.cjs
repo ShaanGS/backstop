@@ -1,4 +1,5 @@
-const si = require("/Users/shaangurushankar/Lemma Hackathon/backstop/node_modules/simple-icons");
+/* eslint-disable @typescript-eslint/no-require-imports -- build script, CommonJS by design */
+const si = require("simple-icons");
 const fs = require("fs");
 
 const brands = [

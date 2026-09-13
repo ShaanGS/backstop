@@ -9,7 +9,7 @@
 import { anthropic } from "@ai-sdk/anthropic";
 import { stepCountIs, streamText } from "ai";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname } from "node:path";
 import { statePath } from "../paths";
 import { newRunId, record } from "../audit";
 import { executePlan } from "../execute";
