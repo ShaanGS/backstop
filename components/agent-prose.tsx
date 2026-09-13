@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BrandMark, Glyph, PATHS } from "./icons";
 import { cn } from "@/lib/utils";
 import type { Evidence } from "@/lib/types";
@@ -16,7 +16,26 @@ import type { Evidence } from "@/lib/types";
  * hundreds of compositing layers on screen and re-triggered
  * them on every stream chunk — it read as lag. The streaming
  * itself is the motion; nothing else needs to move.
+ *
+ * The caret follows the same principle. It holds solid while
+ * tokens are landing and only breathes once the stream goes
+ * quiet — a blink running underneath moving text reads as a
+ * stutter, not a cursor.
  * ───────────────────────────────────────────────────────── */
+
+/** True while tokens are actively landing; false ~320ms after the last one. */
+function useTyping(text: string, live: boolean): boolean {
+  const [typing, setTyping] = useState(false);
+  const first = useRef(true);
+  useEffect(() => {
+    if (!live) { setTyping(false); return; }
+    if (first.current) { first.current = false; return; }
+    setTyping(true);
+    const t = setTimeout(() => setTyping(false), 320);
+    return () => clearTimeout(t);
+  }, [text, live]);
+  return typing;
+}
 
 const CITE = /\[([a-z0-9]+(?:-[a-z0-9]+)+-\d+)\]/g;
 const INLINE = /\*\*([^*]+)\*\*|\*([^*\n]+)\*|`([^`\n]+)`/g;
@@ -83,7 +102,13 @@ export default function AgentProse({
   live: boolean;
   cited?: boolean;
 }) {
-  const nodes = useNodes(text, evidence);
+  /* Trailing whitespace — the \n\n we emit between reasoning steps — would
+     park the caret on an empty line below the last sentence while the model
+     runs a tool. It looks stalled. Strip it for render only; the break returns
+     the instant the next chunk makes it interior. */
+  const shown = live ? text.replace(/\s+$/, "") : text;
+  const typing = useTyping(text, live);
+  const nodes = useNodes(shown, evidence);
   const [open, setOpen] = useState(false);
   const used = useMemo(() => {
     const keys = new Set([...text.matchAll(CITE)].map((m) => m[1]));
@@ -106,8 +131,11 @@ export default function AgentProse({
           }
         })}
         {live && (
-          <span aria-hidden className="ml-[3px] inline-block h-[13px] w-[2px] translate-y-[2px] rounded-full bg-accent align-baseline"
-            style={{ animation: "caret 1s steps(2) infinite" }} />
+          <span
+            aria-hidden
+            className="ml-[3px] inline-block h-[1.05em] w-[2px] translate-y-[0.18em] rounded-full bg-accent align-baseline"
+            style={typing ? undefined : { animation: "caret 1.2s ease-in-out infinite" }}
+          />
         )}
       </p>
 

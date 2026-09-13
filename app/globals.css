@@ -228,8 +228,11 @@ body {
   }
 }
 
+/* A soft breath, not a hard blink. steps(2) chops on/off in the same frames
+   the text reflows, and the two read together as stutter. */
 @keyframes caret {
-  50% { opacity: 0; }
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.18; }
 }
 @keyframes shimmer {
   100% { transform: translateX(100%); }
