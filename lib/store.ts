@@ -19,7 +19,7 @@ import type { Account, BillingSignal, Evidence, Ticket, UsageSignal } from "./ty
 
 export type SeedAccount = (typeof accountsRaw)[number];
 
-const MAP_PATH = join(process.cwd(), ".keel", "seed-map.json");
+const MAP_PATH = join(process.cwd(), "data", "seed-map.json");
 
 export type SeedMap = Record<string, { stripeCustomerId?: string; linearIssueIds?: string[] }>;
 

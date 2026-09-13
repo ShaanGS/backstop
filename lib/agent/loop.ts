@@ -10,6 +10,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { stepCountIs, streamText } from "ai";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { statePath } from "../paths";
 import { newRunId, record } from "../audit";
 import { executePlan } from "../execute";
 import { evaluatePolicy, requiresApproval, survivingActions } from "../policy";
@@ -76,8 +77,8 @@ export type Emit = (e: AgentEvent) => void;
 
 /* ── pending-approval store ────────────────────────────────────────────── */
 
-const PENDING_PATH = join(process.cwd(), ".keel", "pending.json");
-const COMPLETED_PATH = join(process.cwd(), ".keel", "completed.json");
+const PENDING_PATH = statePath("pending.json");
+const COMPLETED_PATH = statePath("completed.json");
 type Pending = Record<string, { plan: Plan; runId: string }>;
 
 function readPending(): Pending {

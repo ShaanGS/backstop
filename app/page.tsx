@@ -193,6 +193,7 @@ export default function Console() {
     entries: LedgerEntry[];
     summary: LedgerSummary;
     evals: { passed: number; total: number; mustNot: number } | null;
+    ephemeral?: boolean;
   } | null>(null);
 
   const loadLedger = useCallback(async () => {
@@ -223,13 +224,13 @@ export default function Console() {
         </div>
 
         <div className="px-3 pb-3">
-          <p className="px-1.5 pb-1 text-[10px] font-semibold tracking-[0.06em] text-ink-3 uppercase">Connected apps</p>
+          <p className="px-1.5 pb-1 text-[10px] font-semibold tracking-[0.06em] text-ink-3 uppercase">Apps Keel can reach</p>
           {connectors.map((c) => <ConnectorRow key={c.id} c={c} />)}
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col px-3">
           <div className="flex items-center px-1.5 pb-1">
-            <p className="text-[10px] font-semibold tracking-[0.06em] text-ink-3 uppercase">Book of business</p>
+            <p className="text-[10px] font-semibold tracking-[0.06em] text-ink-3 uppercase">Your customers</p>
             <button onClick={() => loadAccounts(true)} disabled={busy} aria-label="Refresh accounts"
               className="ml-auto flex size-5 items-center justify-center rounded-[6px] text-ink-3 transition-colors hover:bg-hover hover:text-ink disabled:opacity-40">
               <Glyph d={PATHS.retry} size={11} />
@@ -260,7 +261,7 @@ export default function Console() {
         <header className="flex items-center gap-3 border-b border-line px-5 py-3">
           <div className="min-w-0">
             <h1 className="text-[14px] font-semibold tracking-[-0.01em] text-ink">Revenue retention agent</h1>
-            <p className="text-[11.5px] text-ink-3">Model-driven investigation · deterministic, policy-gated execution</p>
+            <p className="text-[11.5px] text-ink-3">Finds the customer about to leave, acts, and proves what it did</p>
           </div>
           <div className="ml-auto flex items-center gap-2">
             {view === "console" && current && busy && (
@@ -297,6 +298,7 @@ export default function Console() {
                 total: 0, executed: 0, verified: 0, blocked: 0, skipped: 0, failed: 0, runs: 0, apps: [],
               }}
               evals={ledger?.evals ?? { passed: 0, total: 0, mustNot: 0 }}
+              ephemeral={ledger?.ephemeral}
             />
           </div>
         ) : (
@@ -450,7 +452,7 @@ function TurnView({ t, onDecide, onReplay, isLast }: {
       )}
 
       {t.decisions.length > 0 && (
-        <Block label="Policy" sub="deterministic · runs after the model, before any write">
+        <Block label="What the rules said" sub="fixed rules — they run after the model and cannot be argued with">
           <PolicyPanel decisions={t.decisions} />
         </Block>
       )}
@@ -462,7 +464,7 @@ function TurnView({ t, onDecide, onReplay, isLast }: {
       )}
 
       {t.rows.length > 0 && (
-        <Block label="Execution" sub="idempotent · verified by read-back">
+        <Block label="What Keel did" sub="never twice — and each one checked afterwards in the app itself">
           <ActionTimeline rows={t.rows} />
         </Block>
       )}

@@ -259,7 +259,7 @@ export default function CaseFile({ s }: { s: SnapshotDTO }) {
 
       {/* KPI row */}
       <div className="grid grid-cols-2 gap-2 p-4 pb-3 sm:grid-cols-5">
-        <StatTile label="MRR" value={`${money(s.mrrCents)}`} sub={`per month`} />
+        <StatTile label="Revenue" value={`${money(s.mrrCents)}`} sub={`per month`} />
         <StatTile label="Renewal" value={`${s.daysToRenewal}d`} sub={s.status} tone={renewTone} />
         <StatTile label="Seats" value={`${s.usage.changePct > 0 ? "+" : ""}${s.usage.changePct}%`}
           sub={`${s.usage.current} of ${s.usage.baseline}`} tone={usageTone} />

@@ -197,7 +197,7 @@ async function main() {
   await seedStripe(map);
   await seedLinear(map);
   writeSeedMap(map);
-  console.log(`\n  Done. Seed map written to .keel/seed-map.json\n`);
+  console.log(`\n  Done. Seed map written to data/seed-map.json\n`);
 }
 
 main().catch((err) => {

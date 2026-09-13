@@ -118,11 +118,12 @@ function Row({ e }: { e: LedgerEntry }) {
 }
 
 export default function Ledger({
-  entries, summary, evals,
+  entries, summary, evals, ephemeral,
 }: {
   entries: LedgerEntry[];
   summary: LedgerSummary;
   evals: { passed: number; total: number; mustNot: number };
+  ephemeral?: boolean;
 }) {
   const days = useMemo(() => {
     const m = new Map<string, LedgerEntry[]>();
@@ -164,6 +165,17 @@ export default function Ledger({
         <span>{evals.mustNot} of them assert Keel does <em className="not-italic text-ink">nothing</em></span>
         <span className="ml-auto font-mono text-[10.5px] text-ink-3">pnpm eval</span>
       </div>
+
+      {/* On a serverless host the only writable path is /tmp, which dies with the
+          instance. Every gate still runs, but the ledger is no longer durable —
+          and a weakened guarantee that nobody mentions is just a bug. */}
+      {ephemeral && (
+        <p className="mt-2 rounded-card bg-inset px-3 py-2 text-[11.5px] leading-snug text-ink-2">
+          <span className="font-medium text-amber">Hosted demo.</span> State lives in the
+          instance&rsquo;s temporary storage, so a cold start forgets what ran. Every gate still
+          executes; only the record is ephemeral. Run Keel locally for a durable ledger.
+        </p>
+      )}
 
       {entries.length === 0 ? (
         <div className="mt-3 rounded-card bg-surface px-4 py-8 text-center shadow-card">

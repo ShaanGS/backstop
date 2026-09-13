@@ -195,14 +195,19 @@ export function AccountCard({ a, active, onClick }: { a: AccountRow; active: boo
       <div className="flex items-center gap-2">
         <span className={cn("size-1.5 shrink-0 rounded-full", tone === "red" ? "bg-red" : tone === "amber" ? "bg-amber" : "bg-green")} />
         <span className="min-w-0 flex-1 truncate text-[12.5px] font-medium text-ink">{a.name}</span>
-        <span className={cn("shrink-0 font-mono text-[11px] tabular-nums",
-          tone === "red" ? "text-red" : tone === "amber" ? "text-amber" : "text-ink-3")}>{a.riskScore}</span>
+        {/* A bare "92" means nothing to someone seeing this for the first time. */}
+        <span className={cn("shrink-0 font-mono text-[10.5px] tabular-nums",
+          tone === "red" ? "text-red" : tone === "amber" ? "text-amber" : "text-ink-3")}>
+          <span className="opacity-70">risk </span>{a.riskScore}
+        </span>
       </div>
-      <div className="mt-1.5 flex items-center gap-2">
-        <span className="font-mono text-[10.5px] text-ink-3 tabular-nums">{money(a.mrrCents)}/mo</span>
-        <span className="font-mono text-[10.5px] text-ink-3 tabular-nums">{a.daysToRenewal}d</span>
+      <div className="mt-1.5 flex items-baseline gap-2">
+        <span className="font-mono text-[10.5px] text-ink-2 tabular-nums">{money(a.mrrCents)}<span className="text-ink-3">/mo</span></span>
+        <span className="font-mono text-[10.5px] text-ink-3 tabular-nums">renews in {a.daysToRenewal}d</span>
+      </div>
+      <div className="mt-1 flex items-center gap-2">
         <span className={cn("font-mono text-[10.5px] tabular-nums", a.usage.changePct < 0 ? "text-red" : "text-green")}>
-          {pct(a.usage.changePct)}
+          <span className="text-ink-3">usage </span>{pct(a.usage.changePct)}
         </span>
         <span className="ml-auto"><Spark series={a.usage.series} /></span>
       </div>

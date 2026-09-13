@@ -6,7 +6,8 @@
  * from it and the eval harness asserts against it.
  */
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname } from "node:path";
+import { statePath } from "./paths";
 import type { AuditEvent } from "./types";
 
 /**
@@ -17,7 +18,7 @@ import type { AuditEvent } from "./types";
  */
 function auditPath(): string {
   const name = process.env.KEEL_SINK === "1" ? "audit.fixture.jsonl" : "audit.jsonl";
-  return join(process.cwd(), ".keel", name);
+  return statePath(name);
 }
 
 function ensureDir(path: string) {

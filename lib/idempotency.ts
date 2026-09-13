@@ -8,7 +8,8 @@
  */
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname } from "node:path";
+import { statePath } from "./paths";
 import type { ActionType } from "./types";
 
 /**
@@ -20,7 +21,7 @@ import type { ActionType } from "./types";
  */
 function ledgerPath(): string {
   const name = process.env.KEEL_SINK === "1" ? "actions.fixture.json" : "actions.json";
-  return join(process.cwd(), ".keel", name);
+  return statePath(name);
 }
 
 export type LedgerEntry = {
