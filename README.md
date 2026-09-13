@@ -50,6 +50,32 @@ interesting question stops being "can it do the work" and becomes:
 
 Keel's answer is an architecture, not a prompt.
 
+## External apps
+
+**All five are credentialed and reachable** — `pnpm preflight` proves it with one read-only
+call each. Keel still detects which connectors are configured and drops unavailable actions
+from the plan rather than failing on them, so a fresh clone with only Stripe and Linear
+degrades cleanly instead of crashing.
+
+Every write is verified by a read-back against the app's own API.
+
+The test each connector has to pass: **a different audience, on a different clock.** An app
+that only duplicates another app's reader is padding.
+
+| App | Direction | Who reads it, and when | Verified by |
+|---|---|---|---|
+| **Stripe** (test mode) | read | Keel itself — the billing truth an opinion can't override | — |
+| **Linear** | read + write | The team, over days. Reading it answers *is this churn actually a bug we already know about?*; writing puts the recovery task in the queue they already plan from | `linear.issue(id)` re-fetch + title match |
+| **Resend** | write | The customer, now. The only outbound touch, and the only irreversible one | `emails.get(id)`, asserts delivery status |
+| **Slack** | write | The account owner, this hour. The policy engine's two human-shaped verdicts — `require_approval` and `block` — otherwise exist only in a browser tab. An approval nobody sees is a stalled account; a blocked account nobody hears about dies quietly under a compliance tag | `chat.getPermalink(ts)` re-resolve |
+| **Notion** | write | Whoever inherits the account, months later. The audit log is JSONL for machines; this is the same case written for the next human, linked from the Linear ticket so context travels with the work | `pages.retrieve(id)`, asserts not archived |
+
+Product-usage telemetry (weekly active seats) is Keel's own first-party data in
+[`data/accounts.json`](data/accounts.json) — as it would be for any real vendor. Billing and
+support signals are **not** read from there: they are fetched live from Stripe and Linear on every
+run. `pnpm seed` writes the demo tenancy *into* those apps; the agent then reads it *back out* over
+the real APIs.
+
 ## Architecture
 
 > The model proposes. The runtime disposes.
@@ -179,32 +205,6 @@ different and Keel treats them differently:
 
 Conflating the two would give a comfortable demo and the wrong system.
 
-## External apps
-
-**All five are credentialed and reachable** — `pnpm preflight` proves it with one read-only
-call each. Keel still detects which connectors are configured and drops unavailable actions
-from the plan rather than failing on them, so a fresh clone with only Stripe and Linear
-degrades cleanly instead of crashing.
-
-Every write is verified by a read-back against the app's own API.
-
-The test each connector has to pass: **a different audience, on a different clock.** An app
-that only duplicates another app's reader is padding.
-
-| App | Direction | Who reads it, and when | Verified by |
-|---|---|---|---|
-| **Stripe** (test mode) | read | Keel itself — the billing truth an opinion can't override | — |
-| **Linear** | read + write | The team, over days. Reading it answers *is this churn actually a bug we already know about?*; writing puts the recovery task in the queue they already plan from | `linear.issue(id)` re-fetch + title match |
-| **Resend** | write | The customer, now. The only outbound touch, and the only irreversible one | `emails.get(id)`, asserts delivery status |
-| **Slack** | write | The account owner, this hour. The policy engine's two human-shaped verdicts — `require_approval` and `block` — otherwise exist only in a browser tab. An approval nobody sees is a stalled account; a blocked account nobody hears about dies quietly under a compliance tag | `chat.getPermalink(ts)` re-resolve |
-| **Notion** | write | Whoever inherits the account, months later. The audit log is JSONL for machines; this is the same case written for the next human, linked from the Linear ticket so context travels with the work | `pages.retrieve(id)`, asserts not archived |
-
-Product-usage telemetry (weekly active seats) is Keel's own first-party data in
-[`data/accounts.json`](data/accounts.json) — as it would be for any real vendor. Billing and
-support signals are **not** read from there: they are fetched live from Stripe and Linear on every
-run. `pnpm seed` writes the demo tenancy *into* those apps; the agent then reads it *back out* over
-the real APIs.
-
 ## What it looks like
 
 | | |
@@ -270,7 +270,7 @@ Then seed the external apps and run:
 pnpm seed   # creates real Stripe customers, subscriptions, a genuinely declined
             # invoice, and labelled Linear tickets. Safe to re-run — everything
             # is looked up before it is created.
-pnpm dev    # http://localhost:3100
+pnpm dev    # http://localhost:3100/console
 ```
 
 `pnpm seed` refuses to run against a live Stripe key.
@@ -388,7 +388,7 @@ modelled in [`lib/types.ts`](lib/types.ts).
 
 ## Using it
 
-Open `http://localhost:3100`.
+Open **`http://localhost:3100/console`** — `/` is the product page.
 
 - The left rail shows connector health and the book of business, sorted by a deterministic risk
   score with usage sparklines.
@@ -408,14 +408,21 @@ Open `http://localhost:3100`.
 lib/
   agent/          system prompt, tools, the streaming investigation loop
   connectors/     one module per external app — read, write, and verify
-  policy.ts       the five deterministic rules
+  policy.ts       the six deterministic rules
+  ledger.ts       the audit trail, read back as a durable record
+  paths.ts        where state lives — .keel/ locally, /tmp when hosted
   execute.ts      the five-gate execution pipeline
   idempotency.ts  the action ledger
   audit.ts        append-only event log
   store.ts        account registry, usage telemetry, snapshot assembly
 evals/            14 cases + the runner that drives the real pipeline
-scripts/seed.ts   writes the demo tenancy into Stripe and Linear
-app/              Next.js 16 console — streaming NDJSON, no polling
+scripts/
+  seed.ts         writes the demo tenancy into Stripe and Linear
+  preflight.ts    one read-only call per app — proves each is reachable
+app/
+  page.tsx        the product page
+  console/        the operator console — streaming NDJSON, no polling
+  api/            agent, approval, accounts, connectors, ledger
 ```
 
 ## Stack
