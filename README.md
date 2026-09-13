@@ -45,25 +45,7 @@ Backstop's answer is an architecture, not a prompt.
 
 > The model proposes. The runtime disposes.
 
-```
-┌─ PHASE 1 — investigation ──────────────────────────────┐
-│  claude-opus-5, real tool-calling loop, read-only       │
-│                                                         │
-│  list_accounts ──► get_account_snapshot ──► …repeat…    │
-│      │                    │                             │
-│      │            Stripe (live) · Linear (live)         │
-│      │            first-party usage telemetry           │
-│      ▼                                                  │
-│  propose_save_play  ← the ONLY terminal tool            │
-└───────────────────────────┬─────────────────────────────┘
-                            │  a Plan, not an action
-┌───────────────────────────▼─────────────────────────────┐
-│─ PHASE 2 — execution ── no model involvement at all ────│
-│                                                         │
-│   policy  →  approval gate  →  idempotency  →  execute  │
-│                                        →  verify  →  ledger │
-└─────────────────────────────────────────────────────────┘
-```
+<img src="docs/architecture.svg" alt="Backstop architecture: a model-driven read-only investigation phase feeding a fully deterministic execution pipeline of policy, approval, idempotency, execute, verify and audit." width="100%">
 
 **Phase 1 is genuinely agentic.** The model is handed read-only tools and left alone. It decides
 which accounts to open, how deep to dig, when it has enough evidence, and what the play should be.

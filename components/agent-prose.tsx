@@ -13,9 +13,9 @@ import type { Evidence } from "@/lib/types";
  * ───────────────────────────────────────────────────────── */
 
 const CITE = /\[([a-z]+-\d+)\]/g;
-/** The model writes light markdown. We render bold and drop heading hashes
- *  rather than shipping raw asterisks to the operator. */
-const BOLD = /\*\*([^*]+)\*\*/g;
+/** The model writes light markdown. Render it rather than shipping raw
+ *  asterisks and backticks to the operator. Order matters: ** before *. */
+const INLINE = /\*\*([^*]+)\*\*|\*([^*\n]+)\*|`([^`\n]+)`/g;
 
 function SourceChip({ e }: { e: Evidence }) {
   const label = e.source === "usage" ? "telemetry" : e.source;
@@ -46,19 +46,25 @@ function SourceChip({ e }: { e: Evidence }) {
 function useTokens(text: string, evidence: Evidence[]) {
   return useMemo(() => {
     const byKey = new Map(evidence.map((e) => [e.key, e]));
-    const out: ({ w: string; b?: boolean } | { cite: Evidence } | { raw: string })[] = [];
+    type Mark = "b" | "i" | "c";
+    const out: ({ w: string; m?: Mark } | { cite: Evidence } | { raw: string })[] = [];
 
     // Strip heading hashes; keep the words, lose the markup.
     const clean = text.replace(/^#{1,6}\s+/gm, "");
 
+    const plain = (chunk: string) => {
+      for (const w of chunk.split(/(\s+)/)) if (w) out.push({ w });
+    };
+
     const pushWords = (chunk: string) => {
       let cursor = 0;
-      for (const b of chunk.matchAll(BOLD)) {
-        for (const w of chunk.slice(cursor, b.index).split(/(\s+)/)) if (w) out.push({ w });
-        for (const w of b[1].split(/(\s+)/)) if (w) out.push({ w, b: true });
-        cursor = b.index + b[0].length;
+      for (const m of chunk.matchAll(INLINE)) {
+        plain(chunk.slice(cursor, m.index));
+        const [text, mark]: [string, Mark] = m[1] ? [m[1], "b"] : m[2] ? [m[2], "i"] : [m[3], "c"];
+        for (const w of text.split(/(\s+)/)) if (w) out.push({ w, m: mark });
+        cursor = m.index + m[0].length;
       }
-      for (const w of chunk.slice(cursor).split(/(\s+)/)) if (w) out.push({ w });
+      plain(chunk.slice(cursor));
     };
 
     let last = 0;
@@ -102,7 +108,13 @@ export default function AgentProse({
           ) : /^\s+$/.test(t.w) ? (
             <span key={i}>{t.w}</span>
           ) : (
-            <span key={i} className={cn("inline", t.b && "font-semibold text-ink")}
+            <span key={i}
+              className={cn(
+                "inline",
+                t.m === "b" && "font-semibold text-ink",
+                t.m === "i" && "italic",
+                t.m === "c" && "rounded-[4px] bg-inset px-1 font-mono text-[11.5px] text-ink-2",
+              )}
               style={{ animation: "word-in 340ms cubic-bezier(0.23,1,0.32,1) both" }}>
               {t.w}
             </span>

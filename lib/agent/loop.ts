@@ -97,8 +97,17 @@ export async function investigate(
     temperature: 0.2,
   });
 
+  // The model speaks, calls a tool, then speaks again — each is its own text
+  // block. Without a separator they concatenate into one run-on sentence, so
+  // open a paragraph break whenever a new block starts after the first.
+  let spoken = false;
   for await (const part of result.fullStream) {
-    if (part.type === "text-delta") emit({ type: "thinking_delta", text: part.text });
+    if (part.type === "text-start") {
+      if (spoken) emit({ type: "thinking_delta", text: "\n\n" });
+    } else if (part.type === "text-delta") {
+      if (part.text) spoken = true;
+      emit({ type: "thinking_delta", text: part.text });
+    }
     else if (part.type === "tool-call") {
       emit({ type: "tool_call", id: part.toolCallId, name: part.toolName, args: part.input });
     } else if (part.type === "tool-result") {
