@@ -1,23 +1,9 @@
 "use client";
 
-import { CONNECTOR_MARKS, Glyph, PATHS } from "./icons";
+import { Glyph, PATHS } from "./icons";
 import { cn, money, pct } from "@/lib/utils";
-import type { Evidence, PolicyDecision, ProposedAction } from "@/lib/types";
+import type { PolicyDecision, ProposedAction } from "@/lib/types";
 
-/* ── the agent's reasoning, streamed ─────────────────────────────────────── */
-
-export function ReasoningStream({ text, live }: { text: string; live: boolean }) {
-  if (!text && !live) return null;
-  return (
-    <p className="text-[13px] leading-relaxed text-ink-2">
-      {text}
-      {live && (
-        <span className="ml-0.5 inline-block h-3 w-0.5 translate-y-0.5 rounded-full bg-accent"
-          style={{ animation: "fade-in 150ms ease-out both" }} />
-      )}
-    </p>
-  );
-}
 
 /* ── tool calls as they happen ───────────────────────────────────────────── */
 
@@ -41,31 +27,6 @@ export function ToolTrace({ calls }: { calls: { id: string; name: string; summar
 
 /* ── evidence, each item citing the app it came from ─────────────────────── */
 
-export function EvidenceList({ items }: { items: Evidence[] }) {
-  if (!items.length) return null;
-  return (
-    <div className="flex flex-col rounded-card bg-surface p-1 shadow-card">
-      {items.map((e, i) => (
-        <div key={e.id} className="flex items-start gap-2.5 rounded-[9px] px-2 py-2 transition-colors duration-150 hover:bg-hover-2"
-          style={{ animation: `fade-up 320ms cubic-bezier(0.23,1,0.32,1) ${i * 45}ms both` }}>
-          <span className="mt-px flex size-4 shrink-0 items-center justify-center">
-            {CONNECTOR_MARKS[e.source] ?? CONNECTOR_MARKS.usage}
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-[12px] font-medium text-ink">{e.label}</p>
-            <p className="text-[12px] leading-snug text-ink-2">{e.detail}</p>
-          </div>
-          {e.url && (
-            <a href={e.url} target="_blank" rel="noreferrer"
-              className="mt-px shrink-0 text-ink-3 transition-colors duration-150 hover:text-accent-ink" aria-label="Open source record">
-              <Glyph d={PATHS.arrow} size={13} />
-            </a>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
 
 /* ── policy decisions ────────────────────────────────────────────────────── */
 
@@ -153,34 +114,6 @@ export type AccountRow = {
   usage: { changePct: number; series: number[] };
 };
 
-export function Spark({ series }: { series: number[] }) {
-  const w = 54, h = 16, pad = 1.5;
-  const min = Math.min(...series), max = Math.max(...series);
-  const span = max - min || 1;
-  const xy = series.map((v, i) => [
-    (i / (series.length - 1)) * w,
-    pad + (h - pad * 2) - ((v - min) / span) * (h - pad * 2),
-  ] as const);
-  const line = xy.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
-  const down = series[series.length - 1] < series[0];
-  const tone = down ? "var(--red)" : "var(--green)";
-  const id = `sp${series[0]}${series.length}`;
-  const [lx, ly] = xy[xy.length - 1];
-  return (
-    <svg width={w} height={h} className="shrink-0 overflow-visible" aria-hidden>
-      <defs>
-        <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={tone} stopOpacity="0.22" />
-          <stop offset="100%" stopColor={tone} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <polygon points={`0,${h} ${line} ${w},${h}`} fill={`url(#${id})`} />
-      <polyline points={line} fill="none" stroke={tone} strokeWidth="1.25"
-        strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx={lx} cy={ly} r="1.6" fill={tone} />
-    </svg>
-  );
-}
 
 export function AccountCard({ a, active, onClick }: { a: AccountRow; active: boolean; onClick: () => void }) {
   const tone = a.riskScore >= 70 ? "red" : a.riskScore >= 40 ? "amber" : "green";

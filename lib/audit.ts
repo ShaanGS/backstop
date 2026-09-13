@@ -37,10 +37,17 @@ export function record(event: Omit<AuditEvent, "ts">): AuditEvent {
 export function readAudit(runId?: string): AuditEvent[] {
   const path = auditPath();
   if (!existsSync(path)) return [];
-  const all = readFileSync(path, "utf8")
-    .split("\n")
-    .filter(Boolean)
-    .map((line) => JSON.parse(line) as AuditEvent);
+  /* A process killed mid-append leaves a partial final line. Skipping it costs
+     one event; throwing would cost the whole trail. */
+  const all: AuditEvent[] = [];
+  for (const line of readFileSync(path, "utf8").split("\n")) {
+    if (!line) continue;
+    try {
+      all.push(JSON.parse(line) as AuditEvent);
+    } catch {
+      /* unreadable record — the rest of the trail is still good */
+    }
+  }
   return runId ? all.filter((e) => e.runId === runId) : all;
 }
 
