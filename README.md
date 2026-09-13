@@ -15,7 +15,7 @@
 
 Built for the [Multi-App AI Agent Hackathon](https://multiappagenthackathon.com) · Lemma AI × Comma Capital
 
-**[Live app](https://keel-nine-flame.vercel.app)**  ·  **[Demo video (2 min)](DEMO_VIDEO_URL)**  ·  [Reliability report](evals/REPORT.md)  ·  [Architecture](#architecture)  ·  [How it was verified](#how-i-tested-and-verified-it-works)
+**[Live app](https://keel-nine-flame.vercel.app)**  ·  **[▶ Demo video (2 min)](https://github.com/ShaanGS/keel/raw/main/docs/demo.mp4)**  ·  [Reliability report](evals/REPORT.md)  ·  [Architecture](#architecture)  ·  [How it was verified](#how-i-tested-and-verified-it-works)
 
 </div>
 
