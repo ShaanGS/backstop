@@ -162,6 +162,19 @@ export default function Console() {
     }
   }
 
+  /** Re-executes an identical plan. Every action should come back skipped. */
+  async function replay(planId: string, label: string) {
+    setTurns((ts) => [...ts, { ...newTurn(`Replay the same plan for ${label}`), phase: "executing" as Phase }]);
+    try {
+      await consume(await fetch("/api/approve", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planId, approved: true }),
+      }));
+    } catch (e) {
+      patch((t) => ({ ...t, phase: "error", error: (e as Error).message }));
+    }
+  }
+
   const mentions: MentionAccount[] = accounts.map((a) => ({
     id: a.id, name: a.name, mrrCents: a.mrrCents, riskScore: a.riskScore, tags: a.tags,
   }));
@@ -232,7 +245,7 @@ export default function Console() {
           <div className="mx-auto flex w-full max-w-[740px] flex-col gap-7">
             {!turns.length && <Welcome connectors={connectors} modelReady={modelReady} hint={hint} onPick={(q) => ask(q)} />}
             {turns.map((t) => (
-              <TurnView key={t.id} t={t} onDecide={decide} isLast={t.id === current?.id} />
+              <TurnView key={t.id} t={t} onDecide={decide} onReplay={replay} isLast={t.id === current?.id} />
             ))}
           </div>
         </div>
@@ -250,7 +263,9 @@ export default function Console() {
 
 /* ── one conversational turn ─────────────────────────────────────────── */
 
-function TurnView({ t, onDecide, isLast }: { t: Turn; onDecide: (a: boolean) => void; isLast: boolean }) {
+function TurnView({ t, onDecide, onReplay, isLast }: {
+  t: Turn; onDecide: (a: boolean) => void; onReplay: (planId: string, label: string) => void; isLast: boolean;
+}) {
   const thinking = t.phase === "investigating" && !t.plan;
   const lastTool = t.tools[t.tools.length - 1];
 
@@ -308,7 +323,19 @@ function TurnView({ t, onDecide, isLast }: { t: Turn; onDecide: (a: boolean) => 
         </Block>
       )}
 
-      {t.tally && <Tally {...t.tally} seconds={t.ms / 1000} />}
+      {t.tally && (
+        <div className="flex flex-col gap-2">
+          <Tally {...t.tally} seconds={t.ms / 1000} />
+          {t.plan && t.tally.executed > 0 && (
+            <button type="button" onClick={() => onReplay(t.plan!.id, t.snapshot?.name ?? "this account")}
+              className="group flex items-center gap-2 self-start rounded-[9px] border border-line bg-surface px-2.5 py-1.5 text-[12px] text-ink-2 transition-colors duration-150 hover:bg-hover-2 hover:text-ink">
+              <Glyph d={PATHS.retry} size={12} />
+              Replay this exact plan
+              <span className="font-mono text-[10.5px] text-ink-3">proves idempotency</span>
+            </button>
+          )}
+        </div>
+      )}
 
       {t.error && (
         <div className="rounded-card bg-red-tint p-3 text-[12.5px] text-red shadow-card">

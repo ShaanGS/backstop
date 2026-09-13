@@ -90,6 +90,22 @@ engine refuse it — defence in depth you can see working.
 Approval is **plan-level on purpose**: a save play is approved or it is not. Backstop never
 half-executes a recovery sequence.
 
+### Replay vs. re-investigate — a distinction worth being precise about
+
+Idempotency here means **replay safety**, not "never act on this account twice". The two are
+different and Backstop treats them differently:
+
+- **Replaying a plan** — same plan id, so the same action keys — performs **zero** writes. A
+  retry, a double-click, a page refresh, or a crashed process resuming cannot produce a second
+  email. The console has a *Replay this exact plan* button so you can see this rather than take
+  it on trust; the eval suite asserts it.
+- **Running a fresh investigation** mints a new plan and *is* allowed to act, because the
+  account's state may genuinely have moved on. What stops that becoming spam is not the
+  idempotency ledger but the `CONTACT_FREQUENCY` policy rule, which suppresses outreach inside a
+  seven-day cooldown.
+
+Conflating the two would give a comfortable demo and the wrong system.
+
 ## External apps
 
 Five connectors are implemented. **The recorded demo runs with three of them credentialed —
@@ -244,8 +260,16 @@ re-fetched that resource by id and the external system confirmed it.
 
 Then the adversarial checks:
 
-- **Re-run the identical trigger** → `0 executed, 4 skipped (idempotent)`, and no duplicate
-  anything in any app.
+- **Replay the identical plan** → `executed=0, skipped=2`, and no duplicate anything in any app:
+
+  ```
+  --- approve ---
+    executed=2 skipped=0 failed=0
+  --- REPLAY same plan ---
+     SKIPPED_IDEMPOTENT · create_linear_issue
+     SKIPPED_IDEMPOTENT · send_customer_email
+    executed=0 skipped=2 failed=0
+  ```
 - **Run against the `do-not-contact` account** → `0 executed, 4 blocked`, reason recorded in the timeline.
 - **Kill a connector mid-run** (revoke the Linear key) → the action retries once, fails honestly,
   and is reported as `failed` rather than silently swallowed.

@@ -64,6 +64,7 @@ export type Emit = (e: AgentEvent) => void;
 /* ── pending-approval store ────────────────────────────────────────────── */
 
 const PENDING_PATH = join(process.cwd(), ".backstop", "pending.json");
+const COMPLETED_PATH = join(process.cwd(), ".backstop", "completed.json");
 type Pending = Record<string, { plan: Plan; runId: string }>;
 
 function readPending(): Pending {
@@ -76,6 +77,28 @@ function writePending(p: Pending) {
   writeFileSync(PENDING_PATH, JSON.stringify(p, null, 2), "utf8");
 }
 export function getPending(planId: string) { return readPending()[planId]; }
+
+/* Plans that have already run are retained so they can be REPLAYED. Replaying a
+ * plan is the real test of idempotency: the same plan id yields the same action
+ * keys, so every write is recognised and skipped. (A fresh investigation is a
+ * different thing — it mints a new plan, and is allowed to act, because the
+ * account's state may genuinely have moved on.) */
+function readCompleted(): Pending {
+  if (!existsSync(COMPLETED_PATH)) return {};
+  try { return JSON.parse(readFileSync(COMPLETED_PATH, "utf8")) as Pending; } catch { return {}; }
+}
+function writeCompleted(p: Pending) {
+  const dir = dirname(COMPLETED_PATH);
+  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+  writeFileSync(COMPLETED_PATH, JSON.stringify(p, null, 2), "utf8");
+}
+export function getCompleted(planId: string) { return readCompleted()[planId]; }
+
+function markCompleted(plan: Plan, runId: string) {
+  const done = readCompleted();
+  done[plan.id] = { plan, runId };
+  writeCompleted(done);
+}
 
 /* ── phase 1: model-driven investigation ───────────────────────────────── */
 
@@ -151,6 +174,7 @@ async function runPipeline(
     blocked: results.filter((r) => r.status === "blocked_by_policy").length,
     failed: results.filter((r) => r.status === "failed").length,
   };
+  markCompleted(plan, runId);
   record({ runId, kind: "run_finished", accountId: plan.accountId, detail: tally });
   emit({ type: "run_finished", runId, ...tally });
   return results;
@@ -196,8 +220,8 @@ export async function runAgent(emit: Emit, opts: { instruction: string; runId?: 
 
 /** Resumes a parked plan once a human has signed off (or rejected it). */
 export async function resumePlan(emit: Emit, planId: string, approved: boolean) {
-  const entry = getPending(planId);
-  if (!entry) throw new Error(`No plan awaiting approval with id ${planId}.`);
+  const entry = getPending(planId) ?? getCompleted(planId);
+  if (!entry) throw new Error(`No plan found with id ${planId}.`);
   const { plan, runId } = entry;
 
   const pending = readPending();
