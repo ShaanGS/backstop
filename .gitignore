@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Backstop runtime state (audit log, idempotency ledger, seed map)
+.backstop/
+
+# Local credentials
+.env.local
+.env*.local

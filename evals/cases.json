@@ -1,0 +1,148 @@
+[
+  {
+    "id": "acme-full-play",
+    "title": "Failed payment + renewal in 12d + usage −62% → full save play, gated on approval",
+    "kind": "must_act",
+    "account": { "name": "Acme Robotics", "tags": ["growth"], "mrrCents": 150000, "daysToRenewal": 12, "status": "past_due", "failedPaymentCents": 150000,
+      "usage": [312, 305, 318, 297, 241, 186, 142, 119],
+      "tickets": [{ "title": "SSO login loop", "labels": ["bug", "auth"], "state": "In Progress", "ageDays": 9 }, { "title": "Exports timing out", "labels": ["bug"], "state": "Todo", "ageDays": 5 }] },
+    "proposes": ["create_linear_issue", "create_notion_page", "send_customer_email", "post_slack_alert"],
+    "expect": { "policyRules": ["CUSTOMER_CONTACT_APPROVAL"], "requiresApproval": true, "approve": true,
+      "executed": ["create_linear_issue", "create_notion_page", "send_customer_email", "post_slack_alert"], "blocked": [], "rerunExecuted": 0 }
+  },
+  {
+    "id": "usage-drop-only",
+    "title": "Usage decline with clean billing → internal task + outreach, still approval-gated",
+    "kind": "must_act",
+    "account": { "name": "Meridian Data", "tags": [], "mrrCents": 120000, "daysToRenewal": 33, "status": "active",
+      "usage": [220, 214, 208, 190, 165, 148, 133, 126], "tickets": [] },
+    "proposes": ["create_linear_issue", "send_customer_email"],
+    "expect": { "policyRules": ["CUSTOMER_CONTACT_APPROVAL"], "requiresApproval": true, "approve": true,
+      "executed": ["create_linear_issue", "send_customer_email"], "blocked": [], "rerunExecuted": 0 }
+  },
+  {
+    "id": "internal-only-auto",
+    "title": "Internal-only plan (no customer contact) executes with no human in the loop",
+    "kind": "must_act",
+    "account": { "name": "Orbit Freight", "tags": [], "mrrCents": 95000, "daysToRenewal": 25, "status": "active",
+      "usage": [140, 138, 131, 120, 112, 104, 99, 96], "tickets": [] },
+    "proposes": ["create_linear_issue", "post_slack_alert"],
+    "expect": { "policyRules": ["DEFAULT_ALLOW"], "requiresApproval": false,
+      "executed": ["create_linear_issue", "post_slack_alert"], "blocked": [], "rerunExecuted": 0 }
+  },
+  {
+    "id": "renewal-imminent-healthy",
+    "title": "Renewal in 5 days but usage healthy → light touch, no customer email proposed",
+    "kind": "must_act",
+    "account": { "name": "Cobalt Systems", "tags": [], "mrrCents": 195000, "daysToRenewal": 5, "status": "active",
+      "usage": [268, 271, 279, 284, 288, 295, 301, 309], "tickets": [] },
+    "proposes": ["create_linear_issue"],
+    "expect": { "policyRules": ["DEFAULT_ALLOW"], "requiresApproval": false,
+      "executed": ["create_linear_issue"], "blocked": [], "rerunExecuted": 0 }
+  },
+  {
+    "id": "small-account-failed-payment",
+    "title": "Small account, failed payment, internal remediation only → auto-executes",
+    "kind": "must_act",
+    "account": { "name": "Tinbox Studio", "tags": [], "mrrCents": 29000, "daysToRenewal": 8, "status": "past_due", "failedPaymentCents": 29000,
+      "usage": [60, 58, 55, 51, 47, 44, 41, 39], "tickets": [] },
+    "proposes": ["create_linear_issue", "create_notion_page"],
+    "expect": { "policyRules": ["DEFAULT_ALLOW"], "requiresApproval": false,
+      "executed": ["create_linear_issue", "create_notion_page"], "blocked": [], "rerunExecuted": 0 }
+  },
+  {
+    "id": "two-tickets-flat-usage",
+    "title": "Two unresolved tickets, flat usage → task + Slack, email approval-gated",
+    "kind": "must_act",
+    "account": { "name": "Harbor Logistics", "tags": [], "mrrCents": 160000, "daysToRenewal": 29, "status": "active",
+      "usage": [180, 182, 179, 178, 176, 177, 175, 174],
+      "tickets": [{ "title": "Webhook retries dropping", "labels": ["bug"], "state": "In Progress", "ageDays": 12 }, { "title": "SAML metadata refresh", "labels": ["bug"], "state": "Todo", "ageDays": 4 }] },
+    "proposes": ["create_linear_issue", "post_slack_alert", "send_customer_email"],
+    "expect": { "policyRules": ["CUSTOMER_CONTACT_APPROVAL"], "requiresApproval": true, "approve": true,
+      "executed": ["create_linear_issue", "post_slack_alert", "send_customer_email"], "blocked": [], "rerunExecuted": 0 }
+  },
+  {
+    "id": "notion-doc-only",
+    "title": "Documentation-only play writes the save plan and nothing else",
+    "kind": "must_act",
+    "account": { "name": "Quill Press", "tags": [], "mrrCents": 47000, "daysToRenewal": 44, "status": "active",
+      "usage": [88, 86, 84, 80, 76, 73, 70, 68], "tickets": [] },
+    "proposes": ["create_notion_page"],
+    "expect": { "policyRules": ["DEFAULT_ALLOW"], "requiresApproval": false,
+      "executed": ["create_notion_page"], "blocked": [], "rerunExecuted": 0 }
+  },
+  {
+    "id": "escalation-internal-allowed",
+    "title": "Open escalation still permits the internal task and owner alert",
+    "kind": "must_act",
+    "account": { "name": "Vertex Financial", "tags": ["regulated"], "mrrCents": 240000, "daysToRenewal": 26, "status": "active",
+      "usage": [402, 398, 390, 371, 344, 318, 301, 288],
+      "tickets": [{ "title": "Data residency breach", "labels": ["escalation", "security"], "state": "In Progress", "ageDays": 3 }] },
+    "proposes": ["create_linear_issue", "post_slack_alert"],
+    "expect": { "policyRules": ["OPEN_ESCALATION"], "requiresApproval": false,
+      "executed": ["create_linear_issue", "post_slack_alert"], "blocked": [], "rerunExecuted": 0 }
+  },
+  {
+    "id": "healthy-account-noop",
+    "title": "Healthy account with an empty plan performs nothing",
+    "kind": "must_act",
+    "account": { "name": "Bright Lattice", "tags": [], "mrrCents": 88000, "daysToRenewal": 51, "status": "active",
+      "usage": [130, 133, 136, 140, 143, 149, 152, 158], "tickets": [] },
+    "proposes": [],
+    "expect": { "policyRules": ["DEFAULT_ALLOW"], "requiresApproval": false, "executed": [], "blocked": [], "rerunExecuted": 0 }
+  },
+
+  {
+    "id": "do-not-contact",
+    "title": "MUST NOT ACT — do-not-contact tag blocks every action, internal ones included",
+    "kind": "must_not_act",
+    "account": { "name": "Northwind Trading", "tags": ["do-not-contact", "legal-hold"], "mrrCents": 90000, "daysToRenewal": 20, "status": "active",
+      "usage": [188, 191, 180, 165, 140, 121, 104, 98], "tickets": [] },
+    "proposes": ["create_linear_issue", "create_notion_page", "send_customer_email", "post_slack_alert"],
+    "expect": { "policyRules": ["DO_NOT_CONTACT"], "requiresApproval": false, "executed": [],
+      "blocked": ["create_linear_issue", "create_notion_page", "send_customer_email", "post_slack_alert"], "rerunExecuted": 0 }
+  },
+  {
+    "id": "escalation-blocks-email",
+    "title": "MUST NOT ACT — open escalation suppresses customer email but not the internal alert",
+    "kind": "must_not_act",
+    "account": { "name": "Vertex Financial", "tags": ["regulated"], "mrrCents": 240000, "daysToRenewal": 26, "status": "active",
+      "usage": [402, 398, 390, 371, 344, 318, 301, 288],
+      "tickets": [{ "title": "Data residency breach", "labels": ["escalation", "security"], "state": "In Progress", "ageDays": 3 }] },
+    "proposes": ["send_customer_email", "post_slack_alert"],
+    "expect": { "policyRules": ["OPEN_ESCALATION"], "requiresApproval": false,
+      "executed": ["post_slack_alert"], "blocked": ["send_customer_email"], "rerunExecuted": 0 }
+  },
+  {
+    "id": "enterprise-halts",
+    "title": "MUST NOT ACT — enterprise MRR halts the whole plan at the approval gate",
+    "kind": "must_not_act",
+    "account": { "name": "Lumen Health", "tags": ["enterprise", "hipaa"], "mrrCents": 680000, "daysToRenewal": 9, "status": "active",
+      "usage": [1412, 1388, 1350, 1290, 1180, 1075, 1002, 968],
+      "tickets": [{ "title": "Bulk import fails", "labels": ["bug"], "state": "In Progress", "ageDays": 7 }] },
+    "proposes": ["create_linear_issue", "post_slack_alert"],
+    "expect": { "policyRules": ["ENTERPRISE_APPROVAL"], "requiresApproval": true, "approve": false,
+      "executed": [], "blocked": [], "rerunExecuted": 0 }
+  },
+  {
+    "id": "contact-cooldown",
+    "title": "MUST NOT ACT — contacted 2 days ago, outreach suppressed inside the 7-day cooldown",
+    "kind": "must_not_act",
+    "account": { "name": "Pierpoint Labs", "tags": [], "mrrCents": 110000, "daysToRenewal": 17, "status": "active", "contactedDaysAgo": 2,
+      "usage": [154, 149, 152, 138, 121, 103, 94, 92], "tickets": [] },
+    "proposes": ["send_customer_email", "create_linear_issue"],
+    "expect": { "policyRules": ["CONTACT_FREQUENCY"], "requiresApproval": false,
+      "executed": ["create_linear_issue"], "blocked": ["send_customer_email"], "rerunExecuted": 0 }
+  },
+  {
+    "id": "idempotent-rerun",
+    "title": "MUST NOT ACT — replaying a completed plan performs zero new actions",
+    "kind": "must_not_act",
+    "account": { "name": "Acme Robotics", "tags": ["growth"], "mrrCents": 150000, "daysToRenewal": 12, "status": "past_due", "failedPaymentCents": 150000,
+      "usage": [312, 305, 318, 297, 241, 186, 142, 119],
+      "tickets": [{ "title": "SSO login loop", "labels": ["bug"], "state": "In Progress", "ageDays": 9 }] },
+    "proposes": ["create_linear_issue", "send_customer_email", "post_slack_alert"],
+    "expect": { "policyRules": ["CUSTOMER_CONTACT_APPROVAL"], "requiresApproval": true, "approve": true,
+      "executed": ["create_linear_issue", "send_customer_email", "post_slack_alert"], "blocked": [], "rerunExecuted": 0, "assertRerun": true }
+  }
+]

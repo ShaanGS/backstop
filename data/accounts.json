@@ -1,0 +1,107 @@
+[
+  {
+    "id": "acc_acme",
+    "name": "Acme Robotics",
+    "domain": "acmerobotics.io",
+    "owner": { "name": "Dana Whitfield", "email": "dana@backstop.test", "slackHandle": "@dana" },
+    "contact": { "name": "Priya Raghunathan", "email": "priya@acmerobotics.io", "role": "Head of Operations" },
+    "tags": ["growth", "design-partner"],
+    "timezone": "America/New_York",
+    "plan": "Scale",
+    "mrrCents": 150000,
+    "renewalInDays": 12,
+    "seats": 48,
+    "failedPayment": true,
+    "usage": [312, 305, 318, 297, 241, 186, 142, 119],
+    "tickets": [
+      { "title": "SSO login loop on Okta", "labels": ["bug", "auth"], "state": "In Progress", "ageDays": 9 },
+      { "title": "Exports timing out over 50k rows", "labels": ["bug", "performance"], "state": "Todo", "ageDays": 5 }
+    ]
+  },
+  {
+    "id": "acc_northwind",
+    "name": "Northwind Trading",
+    "domain": "northwind.example",
+    "owner": { "name": "Marcus Bell", "email": "marcus@backstop.test", "slackHandle": "@marcus" },
+    "contact": { "name": "Elena Vasquez", "email": "elena@northwind.example", "role": "VP Engineering" },
+    "tags": ["do-not-contact", "legal-hold"],
+    "timezone": "Europe/London",
+    "plan": "Scale",
+    "mrrCents": 90000,
+    "renewalInDays": 20,
+    "seats": 30,
+    "failedPayment": false,
+    "usage": [188, 191, 180, 165, 140, 121, 104, 98],
+    "tickets": []
+  },
+  {
+    "id": "acc_vertex",
+    "name": "Vertex Financial",
+    "domain": "vertexfin.example",
+    "owner": { "name": "Dana Whitfield", "email": "dana@backstop.test", "slackHandle": "@dana" },
+    "contact": { "name": "Tom Okafor", "email": "tom@vertexfin.example", "role": "Director of Data" },
+    "tags": ["regulated"],
+    "timezone": "America/Chicago",
+    "plan": "Scale",
+    "mrrCents": 240000,
+    "renewalInDays": 26,
+    "seats": 62,
+    "failedPayment": false,
+    "usage": [402, 398, 390, 371, 344, 318, 301, 288],
+    "tickets": [
+      { "title": "Data residency breach during EU failover", "labels": ["escalation", "security"], "state": "In Progress", "ageDays": 3 },
+      { "title": "Audit log export missing fields", "labels": ["bug"], "state": "Todo", "ageDays": 11 }
+    ]
+  },
+  {
+    "id": "acc_lumen",
+    "name": "Lumen Health",
+    "domain": "lumenhealth.example",
+    "owner": { "name": "Ivy Chen", "email": "ivy@backstop.test", "slackHandle": "@ivy" },
+    "contact": { "name": "Dr. Alan Reyes", "email": "alan@lumenhealth.example", "role": "Chief Medical Officer" },
+    "tags": ["enterprise", "hipaa"],
+    "timezone": "America/Los_Angeles",
+    "plan": "Enterprise",
+    "mrrCents": 680000,
+    "renewalInDays": 9,
+    "seats": 210,
+    "failedPayment": false,
+    "usage": [1412, 1388, 1350, 1290, 1180, 1075, 1002, 968],
+    "tickets": [
+      { "title": "Bulk import fails above 10k patient records", "labels": ["bug"], "state": "In Progress", "ageDays": 7 }
+    ]
+  },
+  {
+    "id": "acc_pierpoint",
+    "name": "Pierpoint Labs",
+    "domain": "pierpoint.example",
+    "owner": { "name": "Marcus Bell", "email": "marcus@backstop.test", "slackHandle": "@marcus" },
+    "contact": { "name": "Sofia Lindqvist", "email": "sofia@pierpoint.example", "role": "Platform Lead" },
+    "tags": ["startup"],
+    "timezone": "Europe/Stockholm",
+    "plan": "Growth",
+    "mrrCents": 110000,
+    "renewalInDays": 17,
+    "seats": 24,
+    "failedPayment": false,
+    "contactedDaysAgo": 2,
+    "usage": [154, 149, 152, 138, 121, 103, 94, 92],
+    "tickets": []
+  },
+  {
+    "id": "acc_cobalt",
+    "name": "Cobalt Systems",
+    "domain": "cobaltsys.example",
+    "owner": { "name": "Ivy Chen", "email": "ivy@backstop.test", "slackHandle": "@ivy" },
+    "contact": { "name": "Ruth Adeyemi", "email": "ruth@cobaltsys.example", "role": "CTO" },
+    "tags": ["growth"],
+    "timezone": "America/New_York",
+    "plan": "Scale",
+    "mrrCents": 195000,
+    "renewalInDays": 41,
+    "seats": 55,
+    "failedPayment": false,
+    "usage": [268, 271, 279, 284, 288, 295, 301, 309],
+    "tickets": []
+  }
+]

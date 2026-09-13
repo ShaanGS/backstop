@@ -1,26 +1,208 @@
 @import "tailwindcss";
 
+/* ─────────────────────────────────────────────────────────
+ * BACKSTOP DESIGN TOKENS
+ * One neutral ramp (ink/line/surface), one accent, two
+ * semantics (green/red) plus amber for approval states.
+ * Raw custom properties are declared first so components can
+ * reference var(--ink) inline; the @theme block re-exports
+ * them as Tailwind utilities (bg-surface, text-ink-2, …).
+ * ───────────────────────────────────────────────────────── */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --canvas: #fafaf9;
+  --surface: #ffffff;
+  --inset: #f4f4f2;
+  --field: #ffffff;
+  --hover: rgba(23, 24, 26, 0.045);
+  --hover-2: rgba(23, 24, 26, 0.026);
+  --line: #e7e5e1;
+  --line-strong: #d3d0ca;
+  --ink: #17181a;
+  --ink-2: #5f6570;
+  --ink-3: #94999f;
+  --accent: #5b5bd6;
+  --accent-ink: #4a4ac4;
+  --accent-tint: #eeeefb;
+  --green: #14804a;
+  --green-tint: #e3f5ec;
+  --red: #c6303b;
+  --red-tint: #fce9ea;
+  --amber: #b45309;
+  --amber-tint: #fdf1e0;
+
+  --radius-card: 14px;
+  --radius-chip: 7px;
+
+  --shadow-hairline: inset 0 0 0 1px var(--line);
+  --shadow-card: 0 1px 2px rgba(16, 18, 22, 0.04), 0 1px 1px rgba(16, 18, 22, 0.03),
+    inset 0 0 0 1px var(--line);
+  --shadow-raised: 0 12px 32px -8px rgba(16, 18, 22, 0.16), 0 2px 6px rgba(16, 18, 22, 0.06),
+    inset 0 0 0 1px var(--line);
+
+  color-scheme: light;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+:root:not([data-theme="light"]) {
+  @media (prefers-color-scheme: dark) {
+    --canvas: #0b0b0c;
+    --surface: #151517;
+    --inset: #1d1d20;
+    --field: #1a1a1d;
+    --hover: rgba(255, 255, 255, 0.062);
+    --hover-2: rgba(255, 255, 255, 0.034);
+    --line: #26262a;
+    --line-strong: #37373d;
+    --ink: #f2f2f3;
+    --ink-2: #a0a3a9;
+    --ink-3: #6e7177;
+    --accent: #7a7aec;
+    --accent-ink: #a5a5f5;
+    --accent-tint: #21213f;
+    --green: #3dd68c;
+    --green-tint: #11301f;
+    --red: #f2646f;
+    --red-tint: #38161a;
+    --amber: #f0a336;
+    --amber-tint: #33220c;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), inset 0 0 0 1px var(--line);
+    --shadow-raised: 0 16px 40px -10px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.3),
+      inset 0 0 0 1px var(--line);
+
+    color-scheme: dark;
   }
 }
 
+[data-theme="dark"] {
+  --canvas: #0b0b0c;
+  --surface: #151517;
+  --inset: #1d1d20;
+  --field: #1a1a1d;
+  --hover: rgba(255, 255, 255, 0.062);
+  --hover-2: rgba(255, 255, 255, 0.034);
+  --line: #26262a;
+  --line-strong: #37373d;
+  --ink: #f2f2f3;
+  --ink-2: #a0a3a9;
+  --ink-3: #6e7177;
+  --accent: #7a7aec;
+  --accent-ink: #a5a5f5;
+  --accent-tint: #21213f;
+  --green: #3dd68c;
+  --green-tint: #11301f;
+  --red: #f2646f;
+  --red-tint: #38161a;
+  --amber: #f0a336;
+  --amber-tint: #33220c;
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), inset 0 0 0 1px var(--line);
+  --shadow-raised: 0 16px 40px -10px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 0 0 1px var(--line);
+
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-inset: var(--inset);
+  --color-field: var(--field);
+  --color-hover: var(--hover);
+  --color-hover-2: var(--hover-2);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-tint: var(--accent-tint);
+  --color-green: var(--green);
+  --color-green-tint: var(--green-tint);
+  --color-red: var(--red);
+  --color-red-tint: var(--red-tint);
+  --color-amber: var(--amber);
+  --color-amber-tint: var(--amber-tint);
+
+  --radius-card: var(--radius-card);
+  --radius-chip: var(--radius-chip);
+
+  --shadow-hairline: var(--shadow-hairline);
+  --shadow-card: var(--shadow-card);
+  --shadow-raised: var(--shadow-raised);
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --animate-spin: spin 1s linear infinite;
+  --animate-pop-in: pop-in 300ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  --animate-fade-in: fade-in 200ms ease-out both;
+  --animate-fade-up: fade-up 450ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  --animate-eq-bounce: eq-bounce 900ms ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes pop-in {
+  from { opacity: 0; transform: scale(0.86); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes eq-bounce {
+  0%, 100% { transform: scaleY(0.35); }
+  50%      { transform: scaleY(1); }
+}
+@keyframes beam {
+  to { offset-distance: 100%; }
+}
+@keyframes pulse-ring {
+  0%   { opacity: 0.55; transform: scale(0.92); }
+  70%  { opacity: 0;    transform: scale(1.35); }
+  100% { opacity: 0;    transform: scale(1.35); }
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* underline that draws in on hover — used by cited sources */
+.animated-underline {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% 1px;
+  transition: background-size 220ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.animated-underline:hover { background-size: 100% 1px; }
+
+.source-avatar { object-fit: cover; flex-shrink: 0; }
+
+/* thin, unobtrusive scrollbars inside panels */
+.scroll-slim { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+.scroll-slim::-webkit-scrollbar { width: 8px; height: 8px; }
+.scroll-slim::-webkit-scrollbar-thumb {
+  background: var(--line-strong); border-radius: 999px;
+  border: 2px solid transparent; background-clip: content-box;
+}
+.scroll-slim::-webkit-scrollbar-track { background: transparent; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
