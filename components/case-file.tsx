@@ -354,8 +354,9 @@ export function Receipts({ actions, seconds }: { actions: ExecutedAction[]; seco
                   {CONNECTOR_MARKS[app] ?? CONNECTOR_MARKS.usage}
                 </span>
                 <span className="shrink-0 text-[12px] font-medium text-ink">{ACTION_NOUN[a.type] ?? a.type}</span>
-                <span className="min-w-0 flex-1 truncate text-[12px] text-ink-2">
-                  {a.reason ?? a.summary}
+                <span className="min-w-0 flex-1 truncate text-[12px] text-ink-2"
+                  title={a.verification ? `${a.verification.method} — ${a.verification.detail}` : undefined}>
+                  {a.status === "executed" && a.verification?.detail ? a.verification.detail : (a.reason ?? a.summary)}
                 </span>
                 {a.externalId && (
                   <span className="hidden shrink-0 font-mono text-[10px] text-ink-3 sm:inline">

@@ -81,7 +81,18 @@ function Row({ e }: { e: LedgerEntry }) {
           <span className="sm:hidden">{e.accountName} · </span>
           {NOUN[e.type] ?? e.type}
         </span>
-        <span className="block truncate text-[11px] text-ink-3">{e.reason ?? e.summary}</span>
+        {/* For an executed action the useful second line is not what Keel
+            meant to do — it is what the app said back when Keel asked. */}
+        {ok && e.verifyDetail ? (
+          <span className="flex items-center gap-1 text-[11px] text-ink-3" title={e.summary}>
+            <span className={cn("shrink-0", e.verified ? "text-green" : "text-amber")}>
+              <Glyph d={e.verified ? PATHS.check : PATHS.alert} size={9} strokeWidth={3} />
+            </span>
+            <span className="truncate">{e.verifyDetail}</span>
+          </span>
+        ) : (
+          <span className="block truncate text-[11px] text-ink-3">{e.reason ?? e.summary}</span>
+        )}
       </span>
       <span className="flex shrink-0 items-center gap-2">
         {e.idempotencyKey && (

@@ -13,6 +13,8 @@ import accountsRaw from "../data/accounts.json";
 import { getBilling, customerUrl } from "./connectors/stripe";
 import { getTickets } from "./connectors/linear";
 import { isConfigured } from "./env";
+import { lastContactAt } from "./idempotency";
+import { CUSTOMER_FACING } from "./policy";
 import type { Account, BillingSignal, Evidence, Ticket, UsageSignal } from "./types";
 
 export type SeedAccount = (typeof accountsRaw)[number];
@@ -51,10 +53,16 @@ export function listAccounts(): Account[] {
     tags: a.tags,
     timezone: a.timezone,
     stripeCustomerId: map[a.id]?.stripeCustomerId ?? "",
-    lastContactedAt:
+    /* The later of what the seed claims and what Keel actually sent. */
+    lastContactedAt: [
       "contactedDaysAgo" in a && typeof a.contactedDaysAgo === "number"
         ? new Date(Date.now() - a.contactedDaysAgo * 86_400_000).toISOString()
         : undefined,
+      lastContactAt(a.id, CUSTOMER_FACING),
+    ]
+      .filter((v): v is string => Boolean(v))
+      .sort()
+      .at(-1),
   }));
 }
 

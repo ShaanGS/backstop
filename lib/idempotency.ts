@@ -11,7 +11,17 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import type { ActionType } from "./types";
 
-const LEDGER_PATH = join(process.cwd(), ".keel", "actions.json");
+/**
+ * Fixture runs keep their own ledger. The eval suite calls resetLedger() to
+ * start each scenario clean, and pointing that at the live file meant running
+ * the suite erased the record of every real send — after which Keel would
+ * happily email a customer it had already emailed. Fixture state never touches
+ * live state.
+ */
+function ledgerPath(): string {
+  const name = process.env.KEEL_SINK === "1" ? "actions.fixture.json" : "actions.json";
+  return join(process.cwd(), ".keel", name);
+}
 
 export type LedgerEntry = {
   key: string;
@@ -28,18 +38,20 @@ export function actionKey(accountId: string, actionType: ActionType, planId: str
 }
 
 function load(): Record<string, LedgerEntry> {
-  if (!existsSync(LEDGER_PATH)) return {};
+  const path = ledgerPath();
+  if (!existsSync(path)) return {};
   try {
-    return JSON.parse(readFileSync(LEDGER_PATH, "utf8")) as Record<string, LedgerEntry>;
+    return JSON.parse(readFileSync(path, "utf8")) as Record<string, LedgerEntry>;
   } catch {
     return {};
   }
 }
 
 function save(ledger: Record<string, LedgerEntry>) {
-  const dir = dirname(LEDGER_PATH);
+  const path = ledgerPath();
+  const dir = dirname(path);
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
-  writeFileSync(LEDGER_PATH, JSON.stringify(ledger, null, 2), "utf8");
+  writeFileSync(path, JSON.stringify(ledger, null, 2), "utf8");
 }
 
 export function lookup(key: string): LedgerEntry | undefined {
@@ -57,4 +69,21 @@ export function commit(entry: Omit<LedgerEntry, "executedAt">): LedgerEntry {
 /** Test-only: clear the ledger so a scenario can run from a clean slate. */
 export function resetLedger() {
   save({});
+}
+
+/**
+ * When this account was last contacted *by Keel*.
+ *
+ * The seed data carries a `contactedDaysAgo` for touches that happened before
+ * Keel existed, but a cooldown that only reads seed data is not a cooldown: it
+ * would let Keel email a customer, and email them again a minute later, because
+ * the file still says nobody ever has. The ledger holds only executed writes,
+ * which makes it the honest record of outbound contact.
+ */
+export function lastContactAt(accountId: string, customerFacing: ActionType[]): string | undefined {
+  const times = Object.values(load())
+    .filter((e) => e.accountId === accountId && customerFacing.includes(e.actionType))
+    .map((e) => e.executedAt)
+    .sort();
+  return times.at(-1);
 }
