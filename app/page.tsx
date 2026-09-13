@@ -5,7 +5,7 @@ import ActionTimeline, { type RowState } from "@/components/action-timeline";
 import AgentProse from "@/components/agent-prose";
 import Composer, { type MentionAccount } from "@/components/composer";
 import { AccountCard, ApprovalGate, PolicyPanel, type AccountRow } from "@/components/run-panels";
-import CaseFile from "@/components/case-file";
+import CaseFile, { Receipts } from "@/components/case-file";
 import { AccountSkeleton, ConnectorRow, ThinkingCard, ToolTrace } from "@/components/states";
 import { Glyph, PATHS } from "@/components/icons";
 import { Wordmark } from "@/components/brand";
@@ -357,7 +357,7 @@ function TurnView({ t, onDecide, onReplay, isLast }: {
 
       {t.tally && (
         <div className="flex flex-col gap-2">
-          <Tally {...t.tally} seconds={t.ms / 1000} />
+          <Receipts actions={t.rows.flatMap((r) => (r.result ? [r.result] : []))} seconds={t.ms / 1000} />
           {t.plan && t.tally.executed > 0 && (
             <button type="button" onClick={() => onReplay(t.plan!.id, t.snapshot?.name ?? "this account")}
               className="group flex items-center gap-2 self-start rounded-[9px] border border-line bg-surface px-2.5 py-1.5 text-[12px] text-ink-2 transition-colors duration-150 hover:bg-hover-2 hover:text-ink">
@@ -409,28 +409,6 @@ function StatusPill({ phase }: { phase: Phase }) {
       )}
       {s.label}
     </span>
-  );
-}
-
-function Tally({ executed, skipped, blocked, failed, seconds }: { executed: number; skipped: number; blocked: number; failed: number; seconds: number }) {
-  const items = [
-    { n: executed, label: "executed & verified", cls: "text-green" },
-    { n: skipped, label: "skipped (idempotent)", cls: "text-ink-2" },
-    { n: blocked, label: "blocked by policy", cls: "text-red" },
-    { n: failed, label: "failed", cls: "text-red" },
-  ].filter((i) => i.n > 0);
-  if (!items.length) items.push({ n: 0, label: "actions taken", cls: "text-ink-2" });
-  return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-card bg-surface px-3.5 py-3 shadow-card"
-      style={{ animation: "pop-in 300ms cubic-bezier(0.23,1,0.32,1) both" }}>
-      {items.map((i) => (
-        <span key={i.label} className="flex items-baseline gap-1.5">
-          <span className={cn("font-mono text-[15px] font-medium tabular-nums", i.cls)}>{i.n}</span>
-          <span className="text-[12px] text-ink-2">{i.label}</span>
-        </span>
-      ))}
-      <span className="ml-auto font-mono text-[11px] text-ink-3 tabular-nums">{seconds.toFixed(1)}s</span>
-    </div>
   );
 }
 

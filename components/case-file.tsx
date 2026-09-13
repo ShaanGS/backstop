@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { CONNECTOR_MARKS, Glyph, PATHS } from "./icons";
 import { cn, money } from "@/lib/utils";
-import type { Evidence } from "@/lib/types";
+import type { Evidence, ExecutedAction } from "@/lib/types";
 import type { SnapshotDTO } from "@/lib/agent/loop";
 
 /* ─────────────────────────────────────────────────────────
@@ -188,7 +188,7 @@ export function EvidenceGroups({ items }: { items: Evidence[] }) {
 
   if (!groups.length) return null;
   return (
-    <div className="grid gap-2 sm:grid-cols-2">
+    <div className="grid items-start gap-2 sm:grid-cols-2">
       {groups.map(([source, list], gi) => (
         <div key={source} className="rounded-[10px] bg-inset p-2"
           style={{ animation: `fade-up 340ms cubic-bezier(0.23,1,0.32,1) ${gi * 70}ms both` }}>
@@ -247,8 +247,9 @@ export default function CaseFile({ s }: { s: SnapshotDTO }) {
               </span>
             ))}
           </div>
-          <p className="mt-0.5 text-[11.5px] text-ink-3">
-            {s.domain} · owner {s.owner} · contact {s.contact}
+          <p className="mt-0.5 truncate text-[11.5px] text-ink-3">
+            {s.domain} <span className="text-line-strong">·</span> owner {s.owner}{" "}
+            <span className="text-line-strong">·</span> {s.contact}
           </p>
         </div>
         <div className="w-full sm:w-[260px]">
@@ -282,6 +283,107 @@ export default function CaseFile({ s }: { s: SnapshotDTO }) {
         </p>
         <EvidenceGroups items={s.evidence} />
       </div>
+    </div>
+  );
+}
+
+/* ── receipts ─────────────────────────────────────────────────────────── */
+
+
+const ACTION_APP: Record<string, string> = {
+  create_linear_issue: "linear",
+  create_notion_page: "notion",
+  send_customer_email: "resend",
+  post_slack_alert: "slack",
+};
+
+const ACTION_NOUN: Record<string, string> = {
+  create_linear_issue: "Recovery task",
+  create_notion_page: "Save plan",
+  send_customer_email: "Customer email",
+  post_slack_alert: "Owner alert",
+};
+
+/**
+ * What the run actually produced, with links to the real records. The point of
+ * the whole system is that this list is checkable, so it is shown rather than
+ * tucked behind a disclosure.
+ */
+export function Receipts({ actions, seconds }: { actions: ExecutedAction[]; seconds: number }) {
+  const executed = actions.filter((a) => a.status === "executed");
+  const skipped = actions.filter((a) => a.status === "skipped_idempotent");
+  const blocked = actions.filter((a) => a.status === "blocked_by_policy");
+  const failed = actions.filter((a) => a.status === "failed");
+  const verified = executed.filter((a) => a.verification?.verified).length;
+
+  const headline =
+    blocked.length && !executed.length ? { n: blocked.length, label: "blocked by policy — nothing was sent", cls: "text-red", icon: PATHS.lock }
+    : skipped.length && !executed.length ? { n: skipped.length, label: "skipped — already done, nothing duplicated", cls: "text-ink-2", icon: PATHS.retry }
+    : { n: executed.length, label: `executed · ${verified} verified by read-back`, cls: "text-green", icon: PATHS.check };
+
+  return (
+    <div className="overflow-hidden rounded-card bg-surface shadow-card"
+      style={{ animation: "pop-in 320ms cubic-bezier(0.23,1,0.32,1) both" }}>
+      <div className="flex items-center gap-2.5 px-3.5 py-3">
+        <span className={cn("flex size-6 shrink-0 items-center justify-center rounded-full",
+          headline.cls === "text-green" ? "bg-green-tint" : headline.cls === "text-red" ? "bg-red-tint" : "bg-inset", headline.cls)}>
+          <Glyph d={headline.icon} size={12} strokeWidth={2.8} />
+        </span>
+        <span className={cn("font-mono text-[17px] leading-none font-medium tabular-nums", headline.cls)}>{headline.n}</span>
+        <span className="text-[12.5px] text-ink-2">{headline.label}</span>
+        {failed.length > 0 && (
+          <span className="ml-1 inline-flex h-5 items-center rounded-full bg-red-tint px-2 text-[11px] font-medium text-red">
+            {failed.length} failed
+          </span>
+        )}
+        <span className="ml-auto font-mono text-[11px] text-ink-3 tabular-nums">{seconds.toFixed(1)}s</span>
+      </div>
+
+      {actions.length > 0 && (
+        <div className="flex flex-col border-t border-line">
+          {actions.map((a, i) => {
+            const app = ACTION_APP[a.type] ?? "usage";
+            const ok = a.status === "executed";
+            const Row = a.externalUrl ? "a" : "div";
+            return (
+              <Row key={i} {...(a.externalUrl ? { href: a.externalUrl, target: "_blank", rel: "noreferrer" } : {})}
+                className={cn("group flex items-center gap-2.5 border-b border-line px-3.5 py-2 last:border-0 transition-colors duration-150",
+                  a.externalUrl && "hover:bg-hover-2")}
+                style={{ animation: `fade-up 320ms cubic-bezier(0.23,1,0.32,1) ${i * 70}ms both` }}>
+                <span className="flex size-4 shrink-0 items-center justify-center [&_svg]:size-4">
+                  {CONNECTOR_MARKS[app] ?? CONNECTOR_MARKS.usage}
+                </span>
+                <span className="shrink-0 text-[12px] font-medium text-ink">{ACTION_NOUN[a.type] ?? a.type}</span>
+                <span className="min-w-0 flex-1 truncate text-[12px] text-ink-2">
+                  {a.reason ?? a.summary}
+                </span>
+                {a.externalId && (
+                  <span className="hidden shrink-0 font-mono text-[10px] text-ink-3 sm:inline">
+                    {a.externalId.length > 22 ? `${a.externalId.slice(0, 10)}…` : a.externalId}
+                  </span>
+                )}
+                {ok ? (
+                  <span className={cn("inline-flex h-5 shrink-0 items-center gap-1 rounded-full px-1.5 text-[10.5px] font-medium",
+                    a.verification?.verified ? "bg-green-tint text-green" : "bg-amber-tint text-amber")}>
+                    <Glyph d={a.verification?.verified ? PATHS.check : PATHS.alert} size={9} strokeWidth={3} />
+                    {a.verification?.verified ? "Verified" : "Unverified"}
+                  </span>
+                ) : (
+                  <span className={cn("inline-flex h-5 shrink-0 items-center rounded-full px-1.5 text-[10.5px] font-medium",
+                    a.status === "blocked_by_policy" ? "bg-red-tint text-red" : a.status === "failed" ? "bg-red-tint text-red" : "bg-inset text-ink-2")}>
+                    {a.status === "blocked_by_policy" ? "Blocked" : a.status === "failed" ? "Failed" : "Skipped"}
+                  </span>
+                )}
+                {a.externalUrl && (
+                  <span className="shrink-0 text-ink-3 opacity-0 transition-opacity group-hover:opacity-100">
+                    <Glyph d={PATHS.arrow} size={12} />
+                  </span>
+                )}
+              </Row>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
