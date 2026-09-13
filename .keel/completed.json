@@ -80,5 +80,142 @@
       ]
     },
     "runId": "run_mu0alz80l00if"
+  },
+  "plan_mu0apcohg2km": {
+    "plan": {
+      "id": "plan_mu0apcohg2km",
+      "accountId": "acc_acme",
+      "createdAt": "2026-09-13T20:57:39.185Z",
+      "rationale": "Acme is the highest-risk account in the book (score 92): weekly active seats fell 61.4%, 308 → 119, with the collapse starting eight weeks ago — 312 → 305 → 318 → 297 → 241 → 186 → 142 → 119 [acme-usage-1]. The likely mechanism is untriaged: MAR-5 \"SSO login loop on Okta\" [acme-linear-2] and MAR-6 \"Exports timing out over 50k rows\" [acme-linear-1] are both still in Backlog, and a broken Okta login path plausibly explains users being unable to reach the product at all. Two signals conflict and I am not smoothing them over: Stripe reports the subscription as \"active\" renewing in 12 days [acme-stripe-1] while a $4,500 invoice has not collected [acme-stripe-2] — so the account looks healthy in billing while cash is actually outstanding, and renewal may auto-process over an unresolved balance. Separately, Northwind Trading warrants its own non-contact review: seats down 45.9%, 181 → 98, still falling with no floor [northwind-usage-1] and renewal in 20 days [northwind-stripe-1], but it is tagged do-not-contact and legal-hold [northwind-linear-1] and I expect the policy engine to restrict any outreach there.",
+      "evidence": [
+        {
+          "id": "ev_acme_1",
+          "key": "acme-stripe-1",
+          "retrievedAt": "2026-09-13T20:58:05.554Z",
+          "source": "stripe",
+          "label": "Subscription",
+          "detail": "$1,500/mo USD, status \"active\", renews in 12 days.",
+          "url": "https://dashboard.stripe.com/test/customers/cus_VFofjFifMD9zwg"
+        },
+        {
+          "id": "ev_acme_2",
+          "key": "acme-stripe-2",
+          "retrievedAt": "2026-09-13T20:58:05.554Z",
+          "source": "stripe",
+          "label": "Failed payment",
+          "detail": "Invoice for $4500.00 has not collected.",
+          "url": "https://invoice.stripe.com/i/acct_1UE60VAsdCXMWWSs/test_YWNjdF8xVUU2MFZBc2RDWE1XV1NzLF9WRm9ob1BwdXIzQzhmclN4RGRueUFZMVp2R1BMNVFZLDE3OTg3MzU1Mg0200N0THAviS?s=ap"
+        },
+        {
+          "id": "ev_acme_3",
+          "key": "acme-usage-1",
+          "retrievedAt": "2026-09-13T20:58:05.554Z",
+          "source": "usage",
+          "label": "Product usage",
+          "detail": "Weekly active seats 119 vs baseline 308 (-61.4%). Trailing 8 weeks: 312 → 305 → 318 → 297 → 241 → 186 → 142 → 119."
+        },
+        {
+          "id": "ev_acme_4",
+          "key": "acme-linear-1",
+          "retrievedAt": "2026-09-13T20:58:05.554Z",
+          "source": "linear",
+          "label": "Ticket MAR-6",
+          "detail": "\"Exports timing out over 50k rows\" — Backlog, labels: Bug, performance.",
+          "url": "https://linear.app/marlloz/issue/MAR-6/acme-robotics-exports-timing-out-over-50k-rows"
+        },
+        {
+          "id": "ev_acme_5",
+          "key": "acme-linear-2",
+          "retrievedAt": "2026-09-13T20:58:05.554Z",
+          "source": "linear",
+          "label": "Ticket MAR-5",
+          "detail": "\"SSO login loop on Okta\" — Backlog, labels: Bug, auth.",
+          "url": "https://linear.app/marlloz/issue/MAR-5/acme-robotics-sso-login-loop-on-okta"
+        },
+        {
+          "id": "ev_acme_6",
+          "key": "acme-linear-3",
+          "retrievedAt": "2026-09-13T20:58:05.554Z",
+          "source": "linear",
+          "label": "Account tags",
+          "detail": "growth, design-partner"
+        }
+      ],
+      "actions": [
+        {
+          "type": "create_linear_issue",
+          "summary": "Create Linear task \"Acme Robotics save play — escalate MAR-5/MAR-6, resolve $4,500 invoice before 12-day renewal\"",
+          "payload": {
+            "title": "Acme Robotics save play — escalate MAR-5/MAR-6, resolve $4,500 invoice before 12-day renewal",
+            "description": "Acme renews in 12 days at $1,500/mo with seats down 61.4% (308 → 119) and $4,500 uncollected.\n\n1. Escalate MAR-5 (SSO login loop on Okta) out of Backlog today. This is the prime suspect for the seat collapse — confirm with engineering whether failed logins correlate with the drop that began ~8 weeks ago (297 → 241 → 186 → 142 → 119).\n2. Escalate MAR-6 (exports timing out over 50k rows) and get a committed fix date to put in front of Priya.\n3. Pull the failed $4,500 invoice from Stripe: confirm whether this is a card/ACH failure or a deliberate withhold pending the bug fixes. Those need different responses — do not dun a customer who is withholding over a broken login.\n4. Book 30 minutes with Priya Raghunathan (Head of Operations) with the owning engineer present. Lead with the fix timeline, not the invoice.\n5. Flag to finance: subscription shows \"active\" and may auto-renew over the outstanding balance. Decide before day 12 whether to hold renewal rather than stack a second charge on an uncollected one.",
+            "priority": 1
+          }
+        },
+        {
+          "type": "send_customer_email",
+          "summary": "Email the customer — \"The Okta login loop on your account\"",
+          "payload": {
+            "subject": "The Okta login loop on your account",
+            "body": "Priya — two issues on your account are still sitting in our backlog: an SSO login loop on Okta (MAR-5) and exports timing out above 50,000 rows (MAR-6).\n\nOver the same eight weeks, weekly active seats on your account went from 308 to 119. I think those bugs are the cause rather than a coincidence — if people cannot get through login, the seat count is measuring the bug, not your team's interest.\n\nThere is also a $4,500 invoice that has not collected, and renewal lands in 12 days. I would rather not have the billing date force a decision before the product side is fixed.\n\nCan I have 30 minutes this week? I will bring the engineer who owns the Okta path and a committed date for the export fix.\n\n— Dana Whitfield"
+          }
+        }
+      ]
+    },
+    "runId": "run_mu0ao98hxqf7r"
+  },
+  "plan_mu0arr4sh3xs": {
+    "plan": {
+      "id": "plan_mu0arr4sh3xs",
+      "accountId": "acc_northwind",
+      "createdAt": "2026-09-13T20:59:31.228Z",
+      "rationale": "Weekly active seats have fallen every week for eight consecutive weeks — 188→191→180→165→140→121→104→98, now 98 against a 181 baseline, −45.9% [northwind-usage-1] — against a $900/mo subscription renewing in 20 days [northwind-stripe-1]. Two signals conflict and the conflict is the diagnosis: billing is clean with no failed payments [northwind-stripe-1] and Northwind has filed no support tickets at all [northwind-linear-1], so no one has reported a defect; a monotonic slide with no complaints points to silent abandonment or an unannounced internal migration rather than breakage. Northwind is tagged do-not-contact and legal-hold [northwind-linear-1], so I expect the policy engine to suppress the customer email — I am proposing it anyway so the suppression is visible rather than the account going unwatched. Flagging for the operator: this play was directed at Northwind, not selected as top risk — Acme Robotics is worse on every axis (−61.4% usage [acme-usage-1], $4,500 uncollected [acme-stripe-2], renewal in 12 days [acme-stripe-1], MAR-5 SSO login loop and MAR-6 export timeouts both sitting in Backlog [acme-linear-2][acme-linear-1]).",
+      "evidence": [
+        {
+          "id": "ev_northwind_1",
+          "key": "northwind-stripe-1",
+          "retrievedAt": "2026-09-13T20:59:42.989Z",
+          "source": "stripe",
+          "label": "Subscription",
+          "detail": "$900/mo USD, status \"active\", renews in 20 days.",
+          "url": "https://dashboard.stripe.com/test/customers/cus_VFoffWQxTeOSAa"
+        },
+        {
+          "id": "ev_northwind_2",
+          "key": "northwind-usage-1",
+          "retrievedAt": "2026-09-13T20:59:42.989Z",
+          "source": "usage",
+          "label": "Product usage",
+          "detail": "Weekly active seats 98 vs baseline 181 (-45.9%). Trailing 8 weeks: 188 → 191 → 180 → 165 → 140 → 121 → 104 → 98."
+        },
+        {
+          "id": "ev_northwind_3",
+          "key": "northwind-linear-1",
+          "retrievedAt": "2026-09-13T20:59:42.989Z",
+          "source": "linear",
+          "label": "Account tags",
+          "detail": "do-not-contact, legal-hold"
+        }
+      ],
+      "actions": [
+        {
+          "type": "create_linear_issue",
+          "summary": "Create Linear task \"Northwind: diagnose 8-week seat bleed (181→98) before renewal in 20 days\"",
+          "payload": {
+            "title": "Northwind: diagnose 8-week seat bleed (181→98) before renewal in 20 days",
+            "description": "Context: weekly active seats fell every week for 8 weeks to 98 from a 181 baseline, -45.9% [northwind-usage-1]. $900/mo renews in 20 days [northwind-stripe-1]. No failed payments and no support tickets [northwind-stripe-1][northwind-linear-1]. Account is tagged do-not-contact and legal-hold [northwind-linear-1] — do NOT contact Elena Vasquez until Legal clears it in writing.\n\nSteps:\n1. Get written guidance from Legal/Compliance on what contact, if any, is permitted while the legal hold is active. Nothing outbound goes before this.\n2. Pull the per-team and per-user breakdown of the ~83 lost seats. Concentrated in one org unit suggests a reorg or internal tool migration; evenly spread suggests broad disengagement. The remedies are opposite.\n3. Check whether the decline correlates with any release, auth change, or entitlement change on our side in the last 8-10 weeks. Northwind filed zero tickets, so a silent breakage would not surface any other way.\n4. Distinguish admin-initiated seat deprovisioning from users simply going inactive.\n5. If Legal clears contact, book 20 minutes with Elena Vasquez inside the next 14 days and bring the per-team breakdown. If Legal does not clear contact, prepare a right-sized renewal option internally so Finance is not surprised by a downgrade at renewal.\n6. Log findings to the save plan doc either way — this account has never been contacted.",
+            "priority": 2
+          }
+        },
+        {
+          "type": "send_customer_email",
+          "summary": "Email the customer — \"Northwind seat usage: 181 to 98 over eight weeks\"",
+          "payload": {
+            "subject": "Northwind seat usage: 181 to 98 over eight weeks",
+            "body": "Elena — weekly active seats on your account have gone from 181 to 98 since early in the quarter. It's not one drop; it's declined every week for eight weeks.\n\nYou haven't filed a single support ticket in that window, which means I can't tell from here whether this is a team reorganisation, a workflow that quietly stopped working, or something we broke without either of us seeing it.\n\nYour renewal is 20 days out and I'd rather understand the cause than guess at it. Can you give me 20 minutes this week? I'll bring the per-team breakdown so we can see exactly which groups stopped logging in. If the honest answer is that you need fewer seats, I'll right-size the plan before renewal.\n\n— Marcus Bell"
+          }
+        }
+      ]
+    },
+    "runId": "run_mu0aqb8jt539j"
   }
 }

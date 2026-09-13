@@ -15,5 +15,31 @@
     "planId": "plan_mu0amolw0fit",
     "externalId": "20c93a19-f921-4ff1-aed4-f51a23c21d80",
     "executedAt": "2026-09-13T20:56:09.099Z"
+  },
+  "ac8f06819206b6b873e1ad9ddce234d4": {
+    "key": "ac8f06819206b6b873e1ad9ddce234d4",
+    "accountId": "acc_acme",
+    "actionType": "create_linear_issue",
+    "planId": "plan_mu0apcohg2km",
+    "externalId": "df8f693b-8685-4d46-a8ce-2dc9e7355c6d",
+    "externalUrl": "https://linear.app/marlloz/issue/MAR-22/acme-robotics-acme-robotics-save-play-escalate-mar-5mar-6-resolve",
+    "executedAt": "2026-09-13T20:58:07.802Z"
+  },
+  "3ee8fe6c8db039e88205e991997f89ec": {
+    "key": "3ee8fe6c8db039e88205e991997f89ec",
+    "accountId": "acc_acme",
+    "actionType": "send_customer_email",
+    "planId": "plan_mu0apcohg2km",
+    "externalId": "09db2634-cff2-47d7-858d-8216ab21916d",
+    "executedAt": "2026-09-13T20:58:09.241Z"
+  },
+  "f5048726cb9c792f74bbe666390386ba": {
+    "key": "f5048726cb9c792f74bbe666390386ba",
+    "accountId": "acc_northwind",
+    "actionType": "create_linear_issue",
+    "planId": "plan_mu0arr4sh3xs",
+    "externalId": "c50d0c44-90f3-41d9-8c94-8744be11fa40",
+    "externalUrl": "https://linear.app/marlloz/issue/MAR-23/northwind-trading-northwind-diagnose-8-week-seat-bleed-18198-before",
+    "executedAt": "2026-09-13T20:59:45.284Z"
   }
 }

@@ -58,23 +58,138 @@ function markdownNodes(chunk: string, out: Node[]) {
   if (cursor < chunk.length) out.push({ kind: "text", text: chunk.slice(cursor) });
 }
 
-function useNodes(text: string, evidence: Evidence[]): Node[] {
+function nodesFor(text: string, byKey: Map<string, Evidence>): Node[] {
+  const clean = text.replace(/^#{1,6}\s+/gm, "");
+  const out: Node[] = [];
+  let last = 0;
+  for (const m of clean.matchAll(CITE)) {
+    markdownNodes(clean.slice(last, m.index), out);
+    const hit = byKey.get(m[1]);
+    // An unresolved key is the model's slip, not data — show it quietly
+    // rather than as a broken-looking bracket.
+    out.push(hit ? { kind: "cite", e: hit } : { kind: "dead", text: m[1] });
+    last = m.index + m[0].length;
+  }
+  markdownNodes(clean.slice(last), out);
+  return out;
+}
+
+/* ── blocks ───────────────────────────────────────────────────────────
+ * The model reaches for a markdown table whenever it compares two
+ * accounts, and a table flattened into a paragraph is a wall of pipes.
+ * Text is split into prose and table blocks so each renders as itself. */
+
+type Block =
+  | { kind: "prose"; nodes: Node[] }
+  | { kind: "table"; head: Node[][] | null; rows: Node[][][]; align: ("l" | "r")[] };
+
+const isRow = (l: string) => /^\s*\|.*\|\s*$/.test(l);
+const isSep = (l: string) => /^\s*\|[\s:|-]*-[\s:|-]*\|\s*$/.test(l);
+const cellsOf = (l: string) => l.trim().replace(/^\||\|$/g, "").split("|").map((c) => c.trim());
+/** Numeric-ish columns read better right-aligned and in tabular figures. */
+const numeric = (c: string) => /^[−\-+]?[$€£]?[\d,.]+\s*(%|d|days|\/mo)?$/.test(c.replace(/\*/g, "").trim());
+
+function useBlocks(text: string, evidence: Evidence[]): Block[] {
   return useMemo(() => {
     const byKey = new Map(evidence.map((e) => [e.key, e]));
-    const clean = text.replace(/^#{1,6}\s+/gm, "");
-    const out: Node[] = [];
-    let last = 0;
-    for (const m of clean.matchAll(CITE)) {
-      markdownNodes(clean.slice(last, m.index), out);
-      const hit = byKey.get(m[1]);
-      // An unresolved key is the model's slip, not data — show it quietly
-      // rather than as a broken-looking bracket.
-      out.push(hit ? { kind: "cite", e: hit } : { kind: "dead", text: m[1] });
-      last = m.index + m[0].length;
+    const blocks: Block[] = [];
+    let prose: string[] = [];
+    let table: string[] = [];
+
+    const flushProse = () => {
+      const body = prose.join("\n").replace(/^\n+|\n+$/g, "");
+      prose = [];
+      if (body) blocks.push({ kind: "prose", nodes: nodesFor(body, byKey) });
+    };
+    const flushTable = () => {
+      if (!table.length) return;
+      if (table.length < 2) { prose.push(...table); table = []; return; }
+      let head: string[] | null = null;
+      let body = table;
+      if (isSep(table[1])) { head = cellsOf(table[0]); body = table.slice(2); }
+      const grid = body.map(cellsOf).filter((r) => r.some(Boolean));
+      table = [];
+      if (!grid.length) { if (head) prose.push(head.join(" · ")); return; }
+      flushProse();
+      const width = Math.max(head?.length ?? 0, ...grid.map((r) => r.length));
+      const align: ("l" | "r")[] = [];
+      for (let c = 0; c < width; c++) {
+        const col = grid.map((r) => r[c] ?? "").filter(Boolean);
+        align.push(col.length && col.every(numeric) ? "r" : "l");
+      }
+      blocks.push({
+        kind: "table",
+        head: head ? head.map((c) => nodesFor(c, byKey)) : null,
+        rows: grid.map((r) => r.map((c) => nodesFor(c, byKey))),
+        align,
+      });
+    };
+
+    for (const line of text.split("\n")) {
+      if (isRow(line)) table.push(line);
+      else { flushTable(); prose.push(line); }
     }
-    markdownNodes(clean.slice(last), out);
-    return out;
+    flushTable();
+    flushProse();
+    return blocks;
   }, [text, evidence]);
+}
+
+function Inline({ nodes }: { nodes: Node[] }) {
+  return (
+    <>
+      {nodes.map((n, i) => {
+        switch (n.kind) {
+          case "cite": return <Chip key={i} e={n.e} />;
+          case "b": return <strong key={i} className="font-semibold">{n.text}</strong>;
+          case "i": return <em key={i}>{n.text}</em>;
+          case "c": return <code key={i} className="rounded-[4px] bg-inset px-1 font-mono text-[11.5px] text-ink-2">{n.text}</code>;
+          case "dead": return <span key={i} className="font-mono text-[11px] text-ink-3">{n.text}</span>;
+          default: return n.text;
+        }
+      })}
+    </>
+  );
+}
+
+function Table({ b }: { b: Extract<Block, { kind: "table" }> }) {
+  return (
+    <div className="-mx-0.5 my-2 overflow-x-auto">
+      <table className="w-full border-collapse text-[12px]">
+        {b.head && (
+          <thead>
+            <tr>
+              {b.head.map((c, i) => (
+                <th key={i}
+                  className={cn(
+                    "border-b border-line px-2 py-1.5 text-[10.5px] font-medium tracking-[0.04em] text-ink-3 uppercase",
+                    b.align[i] === "r" ? "text-right" : "text-left",
+                  )}>
+                  <Inline nodes={c} />
+                </th>
+              ))}
+            </tr>
+          </thead>
+        )}
+        <tbody>
+          {b.rows.map((r, ri) => (
+            <tr key={ri} className="border-b border-line last:border-0">
+              {r.map((c, ci) => (
+                <td key={ci}
+                  className={cn(
+                    "px-2 py-1.5 align-top text-ink-2",
+                    b.align[ci] === "r" ? "text-right font-mono tabular-nums" : "text-left",
+                    ci === 0 && "font-medium text-ink",
+                  )}>
+                  <Inline nodes={c} />
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
 function Chip({ e }: { e: Evidence }) {
@@ -108,7 +223,7 @@ export default function AgentProse({
      the instant the next chunk makes it interior. */
   const shown = live ? text.replace(/\s+$/, "") : text;
   const typing = useTyping(text, live);
-  const nodes = useNodes(shown, evidence);
+  const blocks = useBlocks(shown, evidence);
   const [open, setOpen] = useState(false);
   const used = useMemo(() => {
     const keys = new Set([...text.matchAll(CITE)].map((m) => m[1]));
@@ -117,27 +232,27 @@ export default function AgentProse({
 
   if (!text && !live) return null;
 
+  const caret = live && (
+    <span
+      aria-hidden
+      className="ml-[3px] inline-block h-[1.05em] w-[2px] translate-y-[0.18em] rounded-full bg-accent align-baseline"
+      style={typing ? undefined : { animation: "caret 1.2s ease-in-out infinite" }}
+    />
+  );
+
   return (
     <div>
-      <p className="text-[13.5px] leading-[1.65] whitespace-pre-wrap text-ink">
-        {nodes.map((n, i) => {
-          switch (n.kind) {
-            case "cite": return <Chip key={i} e={n.e} />;
-            case "b": return <strong key={i} className="font-semibold">{n.text}</strong>;
-            case "i": return <em key={i}>{n.text}</em>;
-            case "c": return <code key={i} className="rounded-[4px] bg-inset px-1 font-mono text-[11.5px] text-ink-2">{n.text}</code>;
-            case "dead": return <span key={i} className="font-mono text-[11px] text-ink-3">{n.text}</span>;
-            default: return n.text;
-          }
-        })}
-        {live && (
-          <span
-            aria-hidden
-            className="ml-[3px] inline-block h-[1.05em] w-[2px] translate-y-[0.18em] rounded-full bg-accent align-baseline"
-            style={typing ? undefined : { animation: "caret 1.2s ease-in-out infinite" }}
-          />
-        )}
-      </p>
+      {blocks.length === 0 && live && <p className="text-[13.5px] leading-[1.65] text-ink">{caret}</p>}
+      {blocks.map((b, i) =>
+        b.kind === "table" ? (
+          <Table key={i} b={b} />
+        ) : (
+          <p key={i} className="text-[13.5px] leading-[1.65] whitespace-pre-wrap text-ink">
+            <Inline nodes={b.nodes} />
+            {i === blocks.length - 1 && caret}
+          </p>
+        ),
+      )}
 
       {cited && used.length > 0 && (
         <>
