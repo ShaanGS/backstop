@@ -36,11 +36,17 @@ export type AgentEvent =
 export type SnapshotDTO = {
   accountId: string;
   name: string;
+  domain: string;
+  owner: string;
+  contact: string;
   riskScore: number;
   riskReasons: string[];
   mrrCents: number;
+  status: string;
   daysToRenewal: number;
-  usageChangePct: number;
+  failedPaymentCents: number | null;
+  usage: AccountSnapshot["usage"];
+  tickets: AccountSnapshot["tickets"];
   tags: string[];
   evidence: AccountSnapshot["evidence"];
 };
@@ -49,11 +55,17 @@ function toDTO(s: AccountSnapshot): SnapshotDTO {
   return {
     accountId: s.account.id,
     name: s.account.name,
+    domain: s.account.domain,
+    owner: s.account.owner.name,
+    contact: `${s.account.contact.name} · ${s.account.contact.role}`,
     riskScore: s.riskScore,
     riskReasons: s.riskReasons,
     mrrCents: s.billing.mrrCents,
+    status: s.billing.status,
     daysToRenewal: s.billing.daysToRenewal,
-    usageChangePct: s.usage.changePct,
+    failedPaymentCents: s.billing.failedPaymentCents ?? null,
+    usage: s.usage,
+    tickets: s.tickets,
     tags: s.account.tags,
     evidence: s.evidence,
   };

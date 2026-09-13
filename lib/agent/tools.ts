@@ -99,7 +99,7 @@ export function buildTools(sink: ProposalSink, onRead?: (name: string, summary: 
           .object({
             title: z.string(),
             description: z.string().describe("What the CSM should actually do, as concrete steps."),
-            priority: z.number().min(0).max(4).describe("Linear priority: 1 urgent, 2 high, 3 normal"),
+            priority: z.number().min(0).max(4).optional().describe("Linear priority: 1 urgent, 2 high, 3 normal. Defaults to 2."),
           })
           .optional()
           .describe("A Linear issue for the account owner. Omit if no human follow-up is warranted."),

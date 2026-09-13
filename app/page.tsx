@@ -4,11 +4,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import ActionTimeline, { type RowState } from "@/components/action-timeline";
 import AgentProse from "@/components/agent-prose";
 import Composer, { type MentionAccount } from "@/components/composer";
-import { AccountCard, ApprovalGate, EvidenceList, PolicyPanel, type AccountRow } from "@/components/run-panels";
+import { AccountCard, ApprovalGate, PolicyPanel, type AccountRow } from "@/components/run-panels";
+import CaseFile from "@/components/case-file";
 import { AccountSkeleton, ConnectorRow, ThinkingCard, ToolTrace } from "@/components/states";
 import { Glyph, PATHS } from "@/components/icons";
 import { Wordmark } from "@/components/brand";
-import { cn, money, pct } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import type { AgentEvent, SnapshotDTO } from "@/lib/agent/loop";
 import type { PolicyDecision, Plan, ProposedAction } from "@/lib/types";
 
@@ -266,8 +267,12 @@ export default function Console() {
 function TurnView({ t, onDecide, onReplay, isLast }: {
   t: Turn; onDecide: (a: boolean) => void; onReplay: (planId: string, label: string) => void; isLast: boolean;
 }) {
-  const thinking = t.phase === "investigating" && !t.plan;
+  const [showTrace, setShowTrace] = useState(false);
+  const [showProse, setShowProse] = useState(true);
+  const thinking = t.phase === "investigating" && !t.snapshot;
   const lastTool = t.tools[t.tools.length - 1];
+  const done = t.tools.filter((c) => c.summary).length;
+  const apps = t.snapshot ? new Set(t.snapshot.evidence.map((e) => e.source)).size : 0;
 
   return (
     <div className="flex flex-col gap-3.5" style={{ animation: "fade-up 420ms cubic-bezier(0.23,1,0.32,1) both" }}>
@@ -285,26 +290,55 @@ function TurnView({ t, onDecide, onReplay, isLast }: {
         />
       )}
 
-      {t.tools.length > 0 && <ToolTrace calls={t.tools} />}
-
-      {(t.reasoning || (t.phase === "investigating" && t.tools.length > 2)) && (
-        <div className="rounded-card bg-surface p-3.5 shadow-card">
-          <AgentProse text={t.reasoning} evidence={t.snapshot?.evidence ?? []} live={t.phase === "investigating"} cited />
+      {/* trace: one line once it has served its purpose, expandable to the calls */}
+      {t.tools.length > 0 && (
+        <div>
+          <button type="button" onClick={() => setShowTrace((v) => !v)} aria-expanded={showTrace}
+            className="-ml-1 flex items-center gap-2 rounded-[7px] px-1 py-0.5 transition-colors duration-150 hover:bg-hover">
+            <span className="flex size-3.5 items-center justify-center rounded-full bg-green-tint text-green">
+              <Glyph d={PATHS.check} size={8} strokeWidth={4} />
+            </span>
+            <span className="font-mono text-[11px] text-ink-2">
+              {done} tool call{done === 1 ? "" : "s"}
+              {apps > 0 && ` · ${apps} apps read`}
+              {t.ms > 0 && ` · ${(t.ms / 1000).toFixed(1)}s`}
+            </span>
+            <span className="text-ink-3 transition-transform duration-300" style={{ transform: showTrace ? "rotate(180deg)" : "none" }}>
+              <Glyph d={PATHS.chevron} size={11} strokeWidth={2.4} />
+            </span>
+          </button>
+          <div className="grid transition-[grid-template-rows,opacity] duration-300"
+            style={{ gridTemplateRows: showTrace || thinking ? "1fr" : "0fr", opacity: showTrace || thinking ? 1 : 0, transitionTimingFunction: "cubic-bezier(0.23,1,0.32,1)" }}>
+            <div className="overflow-hidden"><div className="pt-1.5"><ToolTrace calls={t.tools} /></div></div>
+          </div>
         </div>
       )}
 
-      {t.snapshot && (
-        <Block label="Evidence" sub={`${t.snapshot.name} · risk ${t.snapshot.riskScore}/100`}>
-          <div className="mb-2 flex flex-wrap gap-1.5">
-            <Metric label="MRR" value={`${money(t.snapshot.mrrCents)}/mo`} />
-            <Metric label="Renewal" value={`${t.snapshot.daysToRenewal}d`} />
-            <Metric label="Usage" value={pct(t.snapshot.usageChangePct)} tone={t.snapshot.usageChangePct < 0 ? "red" : "green"} />
-            {t.snapshot.tags.map((tag) => (
-              <Metric key={tag} label="Tag" value={tag} tone={tag === "do-not-contact" ? "red" : undefined} />
-            ))}
+      {/* THE FINDING — leads, because it is what the operator actually needs */}
+      {t.snapshot && <CaseFile s={t.snapshot} />}
+
+      {/* the agent's own account of it, secondary once the data is on screen */}
+      {(t.reasoning || thinking) && (
+        <div>
+          {t.snapshot && (
+            <button type="button" onClick={() => setShowProse((v) => !v)} aria-expanded={showProse}
+              className="-ml-1 mb-1 flex items-center gap-1.5 rounded-[7px] px-1 py-0.5 transition-colors duration-150 hover:bg-hover">
+              <span className="text-[10px] font-semibold tracking-[0.06em] text-ink uppercase">Agent reasoning</span>
+              <span className="font-mono text-[10.5px] text-ink-3">cited</span>
+              <span className="text-ink-3 transition-transform duration-300" style={{ transform: showProse ? "rotate(180deg)" : "none" }}>
+                <Glyph d={PATHS.chevron} size={11} strokeWidth={2.4} />
+              </span>
+            </button>
+          )}
+          <div className="grid transition-[grid-template-rows,opacity] duration-300"
+            style={{ gridTemplateRows: showProse ? "1fr" : "0fr", opacity: showProse ? 1 : 0, transitionTimingFunction: "cubic-bezier(0.23,1,0.32,1)" }}>
+            <div className="overflow-hidden">
+              <div className={cn("rounded-card p-3.5", t.snapshot ? "bg-inset" : "bg-surface shadow-card")}>
+                <AgentProse text={t.reasoning} evidence={t.snapshot?.evidence ?? []} live={t.phase === "investigating"} cited />
+              </div>
+            </div>
           </div>
-          <EvidenceList items={t.snapshot.evidence} />
-        </Block>
+        </div>
       )}
 
       {t.decisions.length > 0 && (
@@ -313,9 +347,7 @@ function TurnView({ t, onDecide, onReplay, isLast }: {
         </Block>
       )}
 
-      {t.gate && isLast && (
-        <ApprovalGate {...t.gate} busy={t.phase === "executing"} onDecide={onDecide} />
-      )}
+      {t.gate && isLast && <ApprovalGate {...t.gate} busy={t.phase === "executing"} onDecide={onDecide} />}
 
       {t.rows.length > 0 && (
         <Block label="Execution" sub="idempotent · verified by read-back">
@@ -358,15 +390,6 @@ function Block({ label, sub, children }: { label: string; sub?: string; children
       </div>
       {children}
     </section>
-  );
-}
-
-function Metric({ label, value, tone }: { label: string; value: string; tone?: "red" | "green" }) {
-  return (
-    <span className="inline-flex h-6 items-center gap-1.5 rounded-chip bg-surface px-2 text-[11.5px] shadow-card">
-      <span className="text-ink-3">{label}</span>
-      <span className={cn("font-mono tabular-nums", tone === "red" ? "text-red" : tone === "green" ? "text-green" : "text-ink")}>{value}</span>
-    </span>
   );
 }
 
