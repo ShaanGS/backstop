@@ -17,13 +17,38 @@ export const CONNECTOR_ENV: Record<ConnectorId, string[]> = {
 
 export const CONNECTOR_META: Record<
   ConnectorId,
-  { name: string; role: string; direction: "read" | "write" | "read+write" }
+  { name: string; role: string; direction: "read" | "write" | "read+write"; whenMissing: string }
 > = {
-  stripe: { name: "Stripe", role: "Billing, MRR, failed payments", direction: "read" },
-  linear: { name: "Linear", role: "Support tickets + recovery task", direction: "read+write" },
-  slack: { name: "Slack", role: "Alert the account owner", direction: "write" },
-  notion: { name: "Notion", role: "Save-plan document", direction: "write" },
-  resend: { name: "Resend", role: "Customer email", direction: "write" },
+  stripe: {
+    name: "Stripe",
+    role: "Billing truth — MRR, renewal, failed payments",
+    direction: "read",
+    whenMissing: "Keel cannot see revenue at risk.",
+  },
+  linear: {
+    name: "Linear",
+    role: "Product signal, and the team's work queue",
+    direction: "read+write",
+    whenMissing: "No recovery task, and churn caused by a known bug looks like churn with no cause.",
+  },
+  slack: {
+    name: "Slack",
+    role: "The owner, now — approvals and refusals",
+    direction: "write",
+    whenMissing: "Approvals wait in a browser tab nobody has open, and refusals reach no one.",
+  },
+  notion: {
+    name: "Notion",
+    role: "The case record, for whoever inherits it",
+    direction: "write",
+    whenMissing: "The evidence lives only in the audit log — readable by machines, not by the next human.",
+  },
+  resend: {
+    name: "Resend",
+    role: "The customer — the only outbound touch",
+    direction: "write",
+    whenMissing: "Keel can diagnose a save play but never run one.",
+  },
 };
 
 /** A value copied straight out of .env.example is not a credential. */

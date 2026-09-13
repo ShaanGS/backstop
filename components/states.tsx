@@ -60,18 +60,38 @@ export function ToolTrace({ calls }: { calls: { id: string; name: string; summar
   );
 }
 
-export function ConnectorRow({ c }: { c: { id: string; name: string; direction: string; configured: boolean } }) {
+export function ConnectorRow({
+  c,
+}: {
+  c: { id: string; name: string; role: string; direction: string; configured: boolean; whenMissing?: string };
+}) {
   return (
-    <div className="group flex items-center gap-2 rounded-[8px] px-1.5 py-1.5 transition-colors duration-150 hover:bg-hover-2">
-      <span className={cn("flex size-4 shrink-0 items-center justify-center transition-opacity duration-200",
-        !c.configured && "opacity-35 grayscale")}>
+    <div
+      title={c.configured ? `${c.name} · ${c.direction} · ${c.role}` : c.whenMissing}
+      className="group flex items-start gap-2 rounded-[8px] px-1.5 py-1.5 transition-colors duration-150 hover:bg-hover-2"
+    >
+      <span
+        className={cn(
+          "mt-px flex size-4 shrink-0 items-center justify-center transition-opacity duration-200",
+          !c.configured && "opacity-35 grayscale",
+        )}
+      >
         <BrandMark id={c.id} size={15} />
       </span>
-      <span className={cn("min-w-0 flex-1 truncate text-[12px]", c.configured ? "text-ink" : "text-ink-3")}>{c.name}</span>
-      <span className="font-mono text-[9px] tracking-tight text-ink-3 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-        {c.direction}
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center gap-1.5">
+          <span className={cn("truncate text-[12px]", c.configured ? "text-ink" : "text-ink-3")}>{c.name}</span>
+          <span className="shrink-0 font-mono text-[9px] tracking-tight text-ink-3">{c.direction}</span>
+          <span
+            className={cn("ml-auto size-1.5 shrink-0 rounded-full", c.configured ? "bg-green" : "bg-line-strong")}
+          />
+        </span>
+        {/* What it is for, not just that it exists. An unconfigured connector
+            says what the operator loses, so a grey dot is never a mystery. */}
+        <span className={cn("mt-0.5 block text-[10.5px] leading-[1.35]", c.configured ? "text-ink-3" : "text-ink-3/70")}>
+          {c.configured ? c.role : "Not connected"}
+        </span>
       </span>
-      <span className={cn("size-1.5 shrink-0 rounded-full", c.configured ? "bg-green" : "bg-line-strong")} />
     </div>
   );
 }

@@ -18,7 +18,7 @@ import type { AgentEvent, SnapshotDTO } from "@/lib/agent/loop";
 import type { PolicyDecision, Plan, ProposedAction } from "@/lib/types";
 
 type Phase = "investigating" | "awaiting" | "executing" | "done" | "error";
-type Connector = { id: string; name: string; role: string; direction: string; configured: boolean };
+type Connector = { id: string; name: string; role: string; direction: string; configured: boolean; whenMissing?: string };
 
 type Turn = {
   id: string;
@@ -96,7 +96,7 @@ export default function Console() {
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [turns.length, current?.reasoning, current?.rows, current?.gate, current?.tally]);
+  }, [turns.length, current?.reasoning, current?.rows, current?.tally]);
 
   /* ── event application ────────────────────────────────────────────── */
 
@@ -330,6 +330,18 @@ function TurnView({ t, onDecide, onReplay, isLast }: {
 }) {
   const [showTrace, setShowTrace] = useState(false);
   const [showProse, setShowProse] = useState(true);
+  /* The gate is the one moment the run stops for a person. Scrolling to the
+     bottom of the transcript can leave it above the fold, so bring the gate
+     itself into view rather than the end of the page. */
+  const gateRef = useRef<HTMLDivElement>(null);
+  const asked = useRef(false);
+  useEffect(() => {
+    if (!t.gate || !isLast || asked.current) return;
+    asked.current = true;
+    requestAnimationFrame(() =>
+      gateRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }),
+    );
+  }, [t.gate, isLast]);
   const thinking = t.phase === "investigating" && !t.snapshot;
   const lastTool = t.tools[t.tools.length - 1];
   const done = t.tools.filter((c) => c.summary).length;
@@ -443,7 +455,11 @@ function TurnView({ t, onDecide, onReplay, isLast }: {
         </Block>
       )}
 
-      {t.gate && isLast && <ApprovalGate {...t.gate} busy={t.phase === "executing"} onDecide={onDecide} />}
+      {t.gate && isLast && (
+        <div ref={gateRef}>
+          <ApprovalGate {...t.gate} busy={t.phase === "executing"} onDecide={onDecide} />
+        </div>
+      )}
 
       {t.rows.length > 0 && (
         <Block label="Execution" sub="idempotent · verified by read-back">
