@@ -180,11 +180,10 @@ Conflating the two would give a comfortable demo and the wrong system.
 
 ## External apps
 
-Five connectors are implemented. **The recorded demo runs with three of them credentialed —
-Stripe, Linear and Resend** — which is what the two-minute video shows end to end. Notion and
-Slack are fully implemented and need only their environment variables; Keel detects which
-connectors are configured and drops unavailable actions from the plan rather than failing on
-them, so the agent's behaviour degrades cleanly.
+**All five are credentialed and reachable** — `pnpm preflight` proves it with one read-only
+call each. Keel still detects which connectors are configured and drops unavailable actions
+from the plan rather than failing on them, so a fresh clone with only Stripe and Linear
+degrades cleanly instead of crashing.
 
 Every write is verified by a read-back against the app's own API.
 
