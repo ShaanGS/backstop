@@ -26,12 +26,12 @@ Linear, Slack, Notion and Resend — diagnoses the cause, runs the recovery play
 action by re-reading it from the app that performed it.
 
 **Finding the cause is computed, not guessed.** Keel locates the onset of the sustained usage
-decline, then scores every open ticket on temporal alignment — a cause must *precede* its
-effect — and on severity. A ticket filed *after* the decline began is ruled out, and Keel says so
-rather than dropping it silently. That matters because the newest, loudest ticket is precisely
-what a human skimming the queue blames, and precisely what a language model asked to "find the
-cause" will confabulate. This was a real bug here: for most of the project's life the agent
-blamed the wrong ticket in every run, fluently and with citations, and no test caught it.
+decline, then scores every open ticket on temporal alignment (a cause must precede its effect)
+and on severity. A ticket filed after the decline began is ruled out, and Keel reports that
+rather than dropping it silently. The newest, most escalated ticket is the one a human skimming
+the queue reaches for first, and the one a language model asked to "find the cause" will invent
+a story about. That was a real bug here: for most of this project's life the agent blamed the
+wrong ticket on every run, fluently and with citations, and no test caught it.
 
 **Two phases.** Phase 1 is genuinely agentic — the model is handed read-only tools and chooses
 its own path: which accounts to open, how deep to dig, when it has seen enough. Nothing in the

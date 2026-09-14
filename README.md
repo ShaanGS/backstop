@@ -38,11 +38,10 @@ Five of those eighteen assert that Keel does **nothing**: on a legal hold, insid
 cooldown, above an enterprise approval threshold, against an open escalation, and on a replay
 of work already done. [Full scorecard →](evals/REPORT.md)
 
-### And a second layer, for the half a pipeline test can't reach
+### A second layer, for what a pipeline test can't reach
 
-Those eighteen cases never read a word the model wrote — which is exactly where Keel's worst
-bug lived. `pnpm eval:grounding` runs the real agent and measures its prose against what was
-computed:
+Those eighteen cases never read a word the model wrote, which is where Keel's worst bug lived.
+`pnpm eval:grounding` runs the real agent and checks its prose against what was computed:
 
 | Check | Why it exists |
 |---|---|
@@ -65,59 +64,54 @@ email arrives.
 The work of catching it is unglamorous and entirely mechanical: read the billing system, read
 the support queue, read the usage data, decide whether this account is actually in trouble, then
 open the task, write the plan, send the email, book the follow-up, and tell the account owner.
-It is roughly forty minutes of cross-app grind per account, which is exactly why it does not
-happen until the quarter is already lost.
+It is roughly forty minutes of cross-app work per account, which is why it tends not to happen
+until the quarter is already lost.
 
 **Keel does that work.** Not a dashboard that tells you an account is at risk — an agent that
 investigates the account across five apps and then actually runs the recovery play.
 
-## Finding the *why* — the part nobody else does
+## Finding the cause
 
-Every churn tool on the market can tell you an account is at risk. None of them tell you what
-went wrong, because the symptom and the cause are never in the same tool: the usage curve lives
-in your product analytics, the cause lives in a support ticket somebody filed six weeks ago.
+A churn dashboard tells you an account is at risk. It does not tell you what went wrong, because
+the symptom and the cause sit in different tools: the usage curve is in product analytics, the
+cause is in a support ticket somebody filed six weeks ago.
 
-Keel's headline claim is that it closes that gap. A claim like that cannot rest on a language
-model noticing a coincidence in prose — so it is **computed**, in
-[`lib/diagnose.ts`](lib/diagnose.ts), in two deterministic steps:
+Keel computes the link, in [`lib/diagnose.ts`](lib/diagnose.ts), in two steps.
 
-**1. Find when the decline actually began.** Not the biggest single weekly drop — the *onset* of
-the sustained downturn, found by walking back from the present while the series keeps falling.
-A drop needs two consecutive declining weeks and a ≥10% fall before it counts as a trend at all.
+**Find when the decline began.** Walk back from the present for as long as the series keeps
+falling. The onset is where it stops, which is not the same as the largest single weekly drop.
+A run needs two consecutive declining weeks and a fall of at least 10% to count as a trend.
 
-**2. Score every open ticket on whether it could have caused that onset.** Two factors:
+**Score each open ticket against that onset.**
 
-| Factor | What it measures |
+| Factor | Rule |
 |---|---|
-| **Temporal alignment** | A cause must *precede* its effect. Reported after the onset scores **0**. Reported 0-21 days before scores highest and decays; reported long before decays too — the account lived with it, so it explains *this* decline less well |
-| **Severity** | How capable that class of problem is of driving seats down. Auth/SSO/login and outages weight 1.0; performance 0.7; export/integration 0.6; cosmetic bugs 0.5 |
+| Temporal alignment | A cause precedes its effect. Reported after the onset scores 0. Reported 0-21 days before scores highest, then decays. Reported much earlier decays too: the account was already living with it. |
+| Severity | How capable that class of problem is of driving seats down. Auth, SSO and outages score 1.0; performance 0.7; export and integrations 0.6; cosmetic bugs 0.5. |
 
-`confidence = alignment × severity`. Above 0.5 is `likely`, above 0 is `possible`, and **zero
-alignment is `ruled_out`** — stated as a finding, not silently dropped:
+`confidence = alignment × severity`. Above 0.5 is `likely`, above 0 is `possible`, and zero
+alignment is `ruled_out`:
 
 ```
 MAR-5   likely      93%   reported 3d before the decline began; auth failures block all use
 MAR-6   ruled_out    0%   reported 30d after the decline began — cannot be the cause
 ```
 
-**Being able to rule a cause out is the whole point.** MAR-6 is the newest, loudest, most
-recently-escalated ticket on the account — exactly what a human skimming the queue would blame,
-and exactly what an LLM asked to "find the cause" will confabulate. It postdates the decline by a
-month, so it is a symptom or a coincidence. Keel says so and sends the operator to MAR-5 instead.
+MAR-6 is the newest and most escalated ticket on the account, and the one a human skimming the
+queue would reach for first. It postdates the decline by a month, so it cannot have caused it.
+Keel says so and points at MAR-5 instead.
 
-This is not hypothetical. **It is the bug that shipped.** For most of this project's life the
-agent blamed the wrong ticket in every single run, fluently and with citations, and no test caught
-it — which is why the diagnosis is computed now and why a [second eval layer](#and-a-second-layer-for-the-half-a-pipeline-test-cant-reach)
-reads the model's prose to confirm it never reinstates a ruled-out cause.
+That was a real bug here. For most of this project's life the agent blamed the wrong ticket on
+every run, fluently and with citations, and no test caught it. The diagnosis is computed for that
+reason, and [the grounding suite](#a-second-layer-for-what-a-pipeline-test-cant-reach)
+checks that the model never reinstates a cause the computation ruled out.
 
-The honest outcomes matter as much as the confident one. `diagnose()` returns exactly three
-verdicts, and two of them are admissions:
+`diagnose()` returns one of three results. Two of them decline to name a cause:
 
-- **A likely cause**, named and cited.
-- **"No open ticket explains the timing — the cause is not in the ticket queue."** Every candidate
-  postdates the onset. The system says it does not know, instead of picking the best of a bad set.
-- **"Silent churn — nobody complained."** A decline with no tickets at all, which is the most
-  dangerous account of the three and the one a ticket-driven process never surfaces.
+- A likely cause, named and cited.
+- No open ticket explains the timing. Every candidate postdates the onset, so the cause is not in
+  the ticket queue.
+- No open tickets at all: a decline nobody filed a ticket about.
 
 ## Why this is hard, and what most agents get wrong
 
@@ -132,28 +126,25 @@ interesting question stops being "can it do the work" and becomes:
 
 Keel's answer is an architecture, not a prompt.
 
-## Where the intelligence is
+## What the model does
 
-The tagline above is *the model proposes, the runtime disposes* — which is a claim about
-**discipline**, not a claim that the model does little. It does the part that cannot be written
-as code:
+*The model proposes, the runtime disposes* describes where each half is trusted, not how much
+work each half does. The model does the part that has no rule set:
 
-| The model does | Why code can't |
+| The model | Why it isn't code |
 |---|---|
-| **Chooses its own path.** Which accounts to open, which signals to chase, how deep to go, when it has seen enough | `stopWhen: stepCountIs(12)` is a ceiling, not a script. Nothing in the repo sequences these calls or branches on an account id. The grounding suite shows the divergence in its own output: on one account the agent names `MAR-5` as the cause, on another it reports that *no* ticket explains the timing — same code, same prompt, different conclusion |
-| **Reads unstructured prose.** Support tickets are English written by frustrated humans | `diagnose.ts` can score *timing* mechanically, but judging whether "SSO redirect loop on Okta" plausibly explains a seat decline is semantic. No regex reaches it |
-| **Synthesises across incompatible schemas.** A Stripe invoice, a Linear issue graph and a weekly seat timeseries share no keys and no vocabulary | Joining them into one account narrative is exactly the work that has no schema |
-| **Writes the artifacts.** The customer email, the save-plan document, the owner alert — specific to this account, this cause, this week | A template that mentioned the wrong root cause would be worse than sending nothing |
-| **Cites every claim** with a key that resolves to a real record | And this is *checked*: `pnpm eval:grounding` fails the run if a single citation is invented |
+| **Chooses its own path** — which accounts to open, which signals to chase, how deep to go, when it has enough | `stopWhen: stepCountIs(12)` is a ceiling, not a script. Nothing in the repo sequences the calls or branches on an account id. The grounding suite prints the divergence: on one account the agent names `MAR-5` as the cause, on another it reports that no ticket explains the timing |
+| **Reads unstructured prose** — support tickets are English written by annoyed people | `diagnose.ts` scores timing mechanically. Judging whether "SSO redirect loop on Okta" would explain a seat decline is semantic, and no regex reaches it |
+| **Joins schemas with nothing in common** — a Stripe invoice, a Linear issue graph, a weekly seat series | There is no key to join them on. Turning the three into one account narrative is the work |
+| **Writes the artifacts** — the customer email, the save-plan document, the owner alert | Each is specific to this account, this cause, this week. A template naming the wrong root cause is worse than sending nothing |
+| **Cites every claim** with a key that resolves to a real record | Checked, not assumed: `pnpm eval:grounding` fails the run on a single invented citation |
 
-What the model is deliberately **not** trusted with is the acting: policy, idempotency,
-execution and verification never consult it. That is not a limit on the intelligence — it is the
-reason the intelligence is allowed near a customer's inbox at all. An LLM can be wrong about
-judgment and recover; it cannot be allowed to be wrong about whether an email was already sent.
+What it is not trusted with is acting. Policy, idempotency, execution and verification never
+consult it, because a model can be wrong about judgment and recover, but cannot be wrong about
+whether an email already went out.
 
-Remove the model and there is no product. There is no rule set that reads a support queue and
-explains a usage cliff — that is the entire problem, and it is why this is an agent rather than a
-dashboard with a threshold alert.
+There is no rule set that reads a support queue and explains a usage cliff. That is the problem,
+and it is why this is an agent rather than a dashboard with a threshold alert.
 
 ## External apps
 
@@ -164,15 +155,15 @@ degrades cleanly instead of crashing.
 
 Every write is verified by a read-back against the app's own API.
 
-The test each connector has to pass: **a different audience, on a different clock.** An app
-that only duplicates another app's reader is padding.
+Each connector has to serve a different audience on a different clock. An app that only
+duplicates another app's reader is padding.
 
 | App | Direction | Who reads it, and when | Verified by |
 |---|---|---|---|
 | **Stripe** (test mode) | read | Keel itself — the billing truth an opinion can't override | — |
 | **Linear** | read + write | The team, over days. Reading it answers *is this churn actually a bug we already know about?*; writing puts the recovery task in the queue they already plan from | `linear.issue(id)` re-fetch + title match |
 | **Resend** | write | The customer, now. The only outbound touch, and the only irreversible one | `emails.get(id)`, asserts delivery status |
-| **Slack** | write | The account owner, this hour. The policy engine's two human-shaped verdicts — `require_approval` and `block` — otherwise exist only in a browser tab. An approval nobody sees is a stalled account; a blocked account nobody hears about dies quietly under a compliance tag | `chat.getPermalink(ts)` re-resolve |
+| **Slack** | write | The account owner, this hour. `require_approval` and `block` otherwise exist only in a browser tab: an approval nobody sees is a stalled account, and a blocked account nobody hears about goes unattended | `chat.getPermalink(ts)` re-resolve |
 | **Notion** | write | Whoever inherits the account, months later. The audit log is JSONL for machines; this is the same case written for the next human, linked from the Linear ticket so context travels with the work | `pages.retrieve(id)`, asserts not archived |
 
 Product-usage telemetry (weekly active seats) is Keel's own first-party data in
@@ -247,8 +238,7 @@ flowchart TB
 **Phase 1 is genuinely agentic.** The model is handed read-only tools and left alone. It decides
 which accounts to open, how deep to dig, when it has enough evidence, and what the play should be.
 Trajectories differ by account: a failed payment sends it down the billing path, an open
-escalation makes it stop and route to a human instead. Same code, different behaviour — that is
-the difference between an agent and a script with an LLM bolted on.
+escalation makes it stop and route to a human instead. Same code, different behaviour.
 
 **Phase 2 never asks the model anything.** Policy, approval, idempotency, execution, verification
 and the ledger are all deterministic code in [`lib/execute.ts`](lib/execute.ts) and
@@ -261,9 +251,8 @@ The system prompt says this to the model explicitly:
 > actually warrants. Do not omit a needed action because you suspect it might be blocked — that is
 > the runtime's decision, not yours, and silently self-censoring hides real risk from the operator.*
 
-This is deliberate. Safety that depends on the model behaving is not safety. In the demo you can
-watch the agent propose a perfectly sensible outreach to Northwind Trading and watch the policy
-engine refuse it — defence in depth you can see working.
+Safety that depends on the model behaving is not safety. In the demo the agent proposes a
+reasonable outreach to Northwind Trading and the policy engine refuses it.
 
 ### The five reliability primitives
 
@@ -282,9 +271,8 @@ work it never did.
 
 ### What a run costs, measured
 
-Every run records its own token use and, separately, the wall-clock of each phase
-([`lib/telemetry.ts`](lib/telemetry.ts)). The two phases are never summed into one
-number, because the gap between them is the architecture claim stated as a measurement:
+Every run records its token use and the wall-clock of each phase separately
+([`lib/telemetry.ts`](lib/telemetry.ts)):
 
 | | Phase 1 — investigate | Phase 2 — execute |
 |---|---|---|
@@ -292,25 +280,20 @@ number, because the gap between them is the architecture claim stated as a measu
 | Typical | **~50-65s**, 4-5 model steps, 5-7 tool calls | **~4-5s** |
 | Model calls | all of them | **zero** |
 
-Phase 2 is an order of magnitude faster than phase 1 for a reason that is not an
-optimisation: it never waits on a model. If that number ever drifts toward phase 1's,
-something has started asking the model questions during execution.
+Phase 2 is roughly ten times faster because it never waits on a model. If the two ever
+converge, something has started consulting the model during execution.
 
-Instrumenting this immediately found two things that had been invisible:
+Measuring it found two bugs that reading the code had not:
 
-- **`temperature: 0.2` was doing nothing.** The model does not accept the parameter and
-  the SDK was silently dropping it. A setting that reads like a determinism guarantee and
-  isn't one is worse than no setting; it's gone.
-- **The prompt cache was completely cold** — 26,782 input tokens, 0 cached, on a run whose
-  tool schemas and system prompt are byte-identical at every step. One cache breakpoint on
-  the system message took cached input from **0% to 33-52%**.
+- `temperature: 0.2` was being discarded. The model does not accept the parameter and the SDK
+  dropped it with a warning. It read like a determinism setting and was not one, so it is gone.
+- The prompt cache was cold: 26,782 input tokens, 0 cached, on a run whose tool schemas and
+  system prompt are identical at every step. One cache breakpoint on the system message took
+  cached input to 33-52%.
 
-Neither was findable by reading the code. That is the argument for measuring.
-
-**On cost:** no dollar figure is printed unless you supply the rates
-(`KEEL_PRICE_INPUT_PER_MTOK` / `KEEL_PRICE_OUTPUT_PER_MTOK`). A price table baked into a
-repo is stale the week after it's written, and an unsourced number on a dashboard is worse
-than an absent one. Tokens and latency are measured facts and are always shown.
+No dollar figure is printed unless you supply the rates (`KEEL_PRICE_INPUT_PER_MTOK` and
+`KEEL_PRICE_OUTPUT_PER_MTOK`). List prices change and a sourceless number is worse than none.
+Tokens and latency are measured, so they are always shown.
 
 ### The policy rules
 
@@ -326,7 +309,7 @@ than an absent one. Tokens and latency are measured facts and are always shown.
 Approval is **plan-level on purpose**: a save play is approved or it is not. Keel never
 half-executes a recovery sequence.
 
-### Replay vs. re-investigate — a distinction worth being precise about
+### Replay vs. re-investigate
 
 Idempotency here means **replay safety**, not "never act on this account twice". The two are
 different and Keel treats them differently:
