@@ -105,12 +105,12 @@ export default function Composer({
       {menu && (
         <div onMouseLeave={() => setEngaged(false)}
           className="absolute inset-x-0 bottom-full z-20 mb-2 overflow-hidden rounded-[12px] bg-surface p-1 shadow-raised"
-          style={{ animation: "pop-in 170ms cubic-bezier(0.23,1,0.32,1) both", transformOrigin: "bottom center" }}>
+          style={{ animation: "pop-in 170ms var(--ease-out) both", transformOrigin: "bottom center" }}>
           <span aria-hidden className="pointer-events-none absolute inset-x-1 rounded-[7px] bg-hover"
             style={{
               top: box?.top ?? 0, height: box?.height ?? 0,
               opacity: box && engaged && rows.length ? 1 : 0,
-              transition: "top 200ms cubic-bezier(0.23,1,0.32,1), height 200ms cubic-bezier(0.23,1,0.32,1), opacity 140ms ease",
+              transition: "top 200ms var(--ease-out), height 200ms var(--ease-out), opacity 140ms ease",
             }} />
           {rows.map((row, i) => (
             <button key={row.key} type="button"
@@ -164,7 +164,7 @@ export default function Composer({
         <div className="flex items-center gap-1">
           <button type="button" aria-label="Mention an account" aria-expanded={menuOpen} disabled={busy}
             onClick={() => { setMenuOpen((o) => !o); inputRef.current?.focus(); }}
-            className={cn("flex size-7 shrink-0 items-center justify-center rounded-[8px] text-ink-3 transition-[background-color,color,transform] duration-150 hover:bg-hover hover:text-ink active:scale-95 disabled:opacity-40",
+            className={cn("flex size-7 shrink-0 items-center justify-center rounded-[10px] text-ink-3 press transition-[background-color,color] duration-150 hover:bg-hover hover:text-ink disabled:opacity-40",
               menuOpen && "bg-hover text-ink")}>
             <Glyph d="M12 5v14M5 12h14" size={16} strokeWidth={2} />
           </button>
@@ -173,7 +173,7 @@ export default function Composer({
             <kbd className="ml-1 rounded-[4px] bg-inset px-1 py-px shadow-hairline">/</kbd> command
           </span>
           <button type="button" aria-label="Send" disabled={!canSend} onClick={send}
-            className="ml-1 flex size-7 shrink-0 items-center justify-center rounded-[8px] transition-[background-color,color,transform] duration-200 enabled:active:scale-95"
+            className="ml-1 flex size-7 shrink-0 items-center justify-center rounded-[10px] press transition-[background-color,color] duration-150"
             style={{ background: canSend ? "var(--ink)" : "var(--line-strong)", color: canSend ? "var(--surface)" : "var(--ink-2)" }}>
             <Glyph d="M12 19V5M5 12l7-7 7 7" size={15} strokeWidth={2.4} />
           </button>

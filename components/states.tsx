@@ -46,7 +46,7 @@ export function ToolTrace({ calls }: { calls: { id: string; name: string; summar
             "inline-flex h-6 items-center gap-1.5 rounded-chip px-2 font-mono text-[10.5px] shadow-hairline transition-colors duration-200",
             c.summary ? "bg-inset text-ink-2" : "bg-accent-tint text-accent-ink",
           )}
-          style={{ animation: `pop-in 240ms cubic-bezier(0.23,1,0.32,1) ${Math.min(i, 8) * 35}ms both` }}>
+          style={{ animation: `pop-in 240ms var(--ease-out) ${Math.min(i, 8) * 35}ms both` }}>
           {c.summary ? (
             <span className="flex size-3 items-center justify-center text-green"><Glyph d={PATHS.check} size={9} strokeWidth={3.5} /></span>
           ) : (

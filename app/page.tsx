@@ -178,12 +178,12 @@ export default function Landing() {
       {/* ── the product ─────────────────────────────────────────────── */}
       <section className="bg-inset/40 px-5 pb-16">
         <div className="mx-auto max-w-[1140px]">
-          <div className="border border-line bg-surface p-2 shadow-card">
+          <div className="bg-surface p-2 shadow-card">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/console.png"
               alt="The Keel console mid-investigation: risk meter, the numbers behind it, and the seat collapse against its baseline"
-              className="w-full"
+              className="w-full outline outline-1 -outline-offset-1 outline-[color:var(--image-outline)]"
             />
           </div>
         </div>

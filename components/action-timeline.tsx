@@ -42,7 +42,7 @@ function Badge({ tone, icon }: { tone: "green" | "red" | "amber" | "ink"; icon: 
   const bg = { green: "bg-green", red: "bg-red", amber: "bg-amber", ink: "bg-ink-3" }[tone];
   return (
     <span className={cn("flex size-[22px] shrink-0 items-center justify-center rounded-full text-white", bg)}
-      style={{ animation: "pop-in 300ms cubic-bezier(0.23,1,0.32,1) both" }}>
+      style={{ animation: "pop-in 300ms var(--ease-out) both" }}>
       <Glyph d={icon} size={12} strokeWidth={3} />
     </span>
   );
@@ -77,7 +77,7 @@ export default function ActionTimeline({ rows }: { rows: RowState[] }) {
 
         return (
           <div key={i} className="overflow-hidden bg-surface shadow-card transition-[border-radius] duration-300"
-            style={{ borderRadius: isOpen ? 14 : 20, animation: `fade-up 400ms cubic-bezier(0.23,1,0.32,1) ${i * 60}ms both` }}>
+            style={{ borderRadius: isOpen ? 14 : 20, animation: `fade-up 400ms var(--ease-out) ${i * 60}ms both` }}>
             <button type="button" aria-expanded={isOpen} onClick={() => setOpen((o) => ({ ...o, [i]: !isOpen }))}
               className="flex w-full items-center gap-2.5 px-2.5 py-2.5 text-left transition-colors duration-150 hover:bg-hover-2">
               {badge}
@@ -103,7 +103,7 @@ export default function ActionTimeline({ rows }: { rows: RowState[] }) {
             </button>
 
             <div className="grid transition-[grid-template-rows,opacity] duration-300"
-              style={{ gridTemplateRows: isOpen ? "1fr" : "0fr", opacity: isOpen ? 1 : 0, transitionTimingFunction: "cubic-bezier(0.23,1,0.32,1)" }}>
+              style={{ gridTemplateRows: isOpen ? "1fr" : "0fr", opacity: isOpen ? 1 : 0, transitionTimingFunction: "var(--ease-out)" }}>
               <div className="overflow-hidden">
                 <div className="grid grid-cols-[22px_1fr] gap-2.5 px-2.5 pb-2.5">
                   <span aria-hidden className="mx-auto h-full w-px bg-line" />

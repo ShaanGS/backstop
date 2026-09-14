@@ -40,7 +40,7 @@ export function RiskMeter({ score, reasons }: { score: number; reasons: string[]
       <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-inset" role="meter"
         aria-valuenow={score} aria-valuemin={0} aria-valuemax={100} aria-label="Churn risk score">
         <div className="h-full rounded-full transition-[width] duration-700"
-          style={{ width: `${score}%`, background: b.tone, transitionTimingFunction: "cubic-bezier(0.23,1,0.32,1)" }} />
+          style={{ width: `${score}%`, background: b.tone, transitionTimingFunction: "var(--ease-out)" }} />
       </div>
       {reasons.length > 0 && (
         <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
@@ -207,7 +207,7 @@ export function EvidenceGroups({ items }: { items: Evidence[] }) {
     <div className="grid items-start gap-2 sm:grid-cols-2">
       {groups.map(([source, list], gi) => (
         <div key={source} className="rounded-[10px] bg-inset p-2"
-          style={{ animation: `fade-up 340ms cubic-bezier(0.23,1,0.32,1) ${gi * 70}ms both` }}>
+          style={{ animation: `fade-up 340ms var(--ease-out) ${gi * 70}ms both` }}>
           <div className="flex items-center gap-1.5 px-1 pb-1.5">
             <span className="flex size-3.5 items-center justify-center [&_svg]:size-3.5">
               {CONNECTOR_MARKS[source] ?? CONNECTOR_MARKS.usage}
@@ -250,7 +250,7 @@ export default function CaseFile({ s }: { s: SnapshotDTO }) {
 
   return (
     <div className="overflow-hidden rounded-card bg-surface shadow-card"
-      style={{ animation: "fade-up 460ms cubic-bezier(0.23,1,0.32,1) both" }}>
+      style={{ animation: "fade-up 460ms var(--ease-out) both" }}>
       {/* header */}
       <div className="flex flex-wrap items-start gap-x-4 gap-y-3 border-b border-line p-4">
         <div className="min-w-0 flex-1">
@@ -325,7 +325,7 @@ export function DiagnosisPanel({ d }: { d: SnapshotDTO["diagnosis"] }) {
 
   return (
     <div className="rounded-card bg-surface p-3.5 shadow-card"
-      style={{ animation: "fade-up 340ms cubic-bezier(0.23,1,0.32,1) both" }}>
+      style={{ animation: "fade-up 340ms var(--ease-out) both" }}>
       <div className="flex items-baseline gap-2">
         <p className="text-[11px] font-medium tracking-[0.04em] text-ink-3 uppercase">Diagnosis</p>
         <p className="font-mono text-[10px] text-ink-3">computed, not inferred</p>
@@ -406,7 +406,7 @@ export function Receipts({ actions, seconds }: { actions: ExecutedAction[]; seco
 
   return (
     <div className="overflow-hidden rounded-card bg-surface shadow-card"
-      style={{ animation: "pop-in 320ms cubic-bezier(0.23,1,0.32,1) both" }}>
+      style={{ animation: "pop-in 320ms var(--ease-out) both" }}>
       <div className="flex items-center gap-2.5 px-3.5 py-3">
         <span className={cn("flex size-6 shrink-0 items-center justify-center rounded-full",
           headline.cls === "text-green" ? "bg-green-tint" : headline.cls === "text-red" ? "bg-red-tint" : "bg-inset", headline.cls)}>
@@ -432,7 +432,7 @@ export function Receipts({ actions, seconds }: { actions: ExecutedAction[]; seco
               <Row key={i} {...(a.externalUrl ? { href: a.externalUrl, target: "_blank", rel: "noreferrer" } : {})}
                 className={cn("group flex items-center gap-2.5 border-b border-line px-3.5 py-2 last:border-0 transition-colors duration-150",
                   a.externalUrl && "hover:bg-hover-2")}
-                style={{ animation: `fade-up 320ms cubic-bezier(0.23,1,0.32,1) ${i * 70}ms both` }}>
+                style={{ animation: `fade-up 320ms var(--ease-out) ${i * 70}ms both` }}>
                 <span className="flex size-4 shrink-0 items-center justify-center [&_svg]:size-4">
                   {CONNECTOR_MARKS[app] ?? CONNECTOR_MARKS.usage}
                 </span>

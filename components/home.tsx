@@ -344,6 +344,7 @@ export default function Home({
                 <li key={a.id}>
                   <button
                     type="button"
+                    data-press-row
                     onClick={() => onInvestigate(a)}
                     className="flex w-full items-start gap-2.5 rounded-[9px] px-1.5 py-2 text-left transition-colors hover:bg-hover-2"
                   >

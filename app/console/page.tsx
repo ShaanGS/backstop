@@ -10,6 +10,7 @@ import Ledger from "@/components/ledger";
 import Home from "@/components/home";
 import type { LedgerEntry, LedgerSummary, MetricsSummary } from "@/lib/ledger";
 import { formatMs, formatTokens, type RunMetrics } from "@/lib/telemetry";
+import { applyTheme } from "@/lib/theme";
 import { AccountSkeleton, ConnectorRow } from "@/components/states";
 import { ToolCard, ToolLog } from "@/components/agents/tool-card";
 import LoadingState from "@/components/loading-state";
@@ -83,8 +84,7 @@ export default function Console() {
   function toggleTheme() {
     const next = (theme ?? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")) === "dark" ? "light" : "dark";
     setTheme(next);
-    document.documentElement.setAttribute("data-theme", next);
-    try { localStorage.setItem("keel-theme", next); } catch {}
+    applyTheme(next);
   }
 
   /* ── live timer on the running turn ───────────────────────────────── */
@@ -220,7 +220,7 @@ export default function Console() {
       <aside className="hidden min-h-0 flex-col border-r border-line bg-canvas lg:flex">
         <div className="flex items-center gap-2 px-4 py-3.5">
           <Wordmark />
-          <button onClick={toggleTheme} aria-label="Toggle theme"
+          <button onClick={toggleTheme} aria-label="Toggle theme" data-press
             className="ml-auto flex size-6 items-center justify-center rounded-[7px] text-ink-3 transition-colors duration-150 hover:bg-hover hover:text-ink">
             <Glyph size={13}>
               <circle cx="12" cy="12" r="4.5" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" />
@@ -236,7 +236,7 @@ export default function Console() {
         <div className="flex min-h-0 flex-1 flex-col px-3">
           <div className="flex items-center px-1.5 pb-1">
             <p className="text-[10px] font-semibold tracking-[0.06em] text-ink-3 uppercase">Your customers</p>
-            <button onClick={() => loadAccounts(true)} disabled={busy} aria-label="Refresh accounts"
+            <button onClick={() => loadAccounts(true)} disabled={busy} aria-label="Refresh accounts" data-press
               className="ml-auto flex size-5 items-center justify-center rounded-[6px] text-ink-3 transition-colors hover:bg-hover hover:text-ink disabled:opacity-40">
               <Glyph d={PATHS.retry} size={11} />
             </button>
@@ -278,6 +278,7 @@ export default function Console() {
                 <button
                   key={v}
                   role="tab"
+                  data-press-row
                   aria-selected={view === v}
                   onClick={() => setView(v)}
                   className={cn(
@@ -369,7 +370,7 @@ function TurnView({ t, onDecide, onReplay, isLast }: {
   const apps = t.snapshot ? new Set(t.snapshot.evidence.map((e) => e.source)).size : 0;
 
   return (
-    <div className="flex flex-col gap-3.5" style={{ animation: "fade-up 420ms cubic-bezier(0.23,1,0.32,1) both" }}>
+    <div className="flex flex-col gap-3.5" style={{ animation: "fade-up 420ms var(--ease-out) both" }}>
       {/* operator */}
       <div className="flex justify-end">
         <p className="max-w-[80%] rounded-[14px] rounded-br-[5px] bg-inset px-3 py-2 text-[13px] leading-snug text-ink shadow-hairline">
@@ -392,7 +393,7 @@ function TurnView({ t, onDecide, onReplay, isLast }: {
       {/* trace: one line once it has served its purpose, expandable to the calls */}
       {t.tools.length > 0 && (
         <div>
-          <button type="button" onClick={() => setShowTrace((v) => !v)} aria-expanded={showTrace}
+          <button type="button" data-press onClick={() => setShowTrace((v) => !v)} aria-expanded={showTrace}
             className="-ml-1 flex items-center gap-2 rounded-[7px] px-1 py-0.5 transition-colors duration-150 hover:bg-hover">
             <span className="flex size-3.5 items-center justify-center rounded-full bg-green-tint text-green">
               <Glyph d={PATHS.check} size={8} strokeWidth={4} />
@@ -407,7 +408,7 @@ function TurnView({ t, onDecide, onReplay, isLast }: {
             </span>
           </button>
           <div className="grid transition-[grid-template-rows,opacity] duration-300"
-            style={{ gridTemplateRows: showTrace || thinking ? "1fr" : "0fr", opacity: showTrace || thinking ? 1 : 0, transitionTimingFunction: "cubic-bezier(0.23,1,0.32,1)" }}>
+            style={{ gridTemplateRows: showTrace || thinking ? "1fr" : "0fr", opacity: showTrace || thinking ? 1 : 0, transitionTimingFunction: "var(--ease-out)" }}>
             <div className="overflow-hidden">
               <div className="pt-1.5">
                 <ToolLog>
@@ -450,7 +451,7 @@ function TurnView({ t, onDecide, onReplay, isLast }: {
       {(t.reasoning || thinking) && (
         <div>
           {t.snapshot && (
-            <button type="button" onClick={() => setShowProse((v) => !v)} aria-expanded={showProse}
+            <button type="button" data-press onClick={() => setShowProse((v) => !v)} aria-expanded={showProse}
               className="-ml-1 mb-1 flex items-center gap-1.5 rounded-[7px] px-1 py-0.5 transition-colors duration-150 hover:bg-hover">
               <span className="text-[10px] font-semibold tracking-[0.06em] text-ink uppercase">Agent reasoning</span>
               <span className="font-mono text-[10.5px] text-ink-3">cited</span>
@@ -460,7 +461,7 @@ function TurnView({ t, onDecide, onReplay, isLast }: {
             </button>
           )}
           <div className="grid transition-[grid-template-rows,opacity] duration-300"
-            style={{ gridTemplateRows: showProse ? "1fr" : "0fr", opacity: showProse ? 1 : 0, transitionTimingFunction: "cubic-bezier(0.23,1,0.32,1)" }}>
+            style={{ gridTemplateRows: showProse ? "1fr" : "0fr", opacity: showProse ? 1 : 0, transitionTimingFunction: "var(--ease-out)" }}>
             <div className="overflow-hidden">
               <div className={cn("rounded-card p-3.5", t.snapshot ? "bg-inset" : "bg-surface shadow-card")}>
                 <AgentProse text={t.reasoning} evidence={t.evidence} live={t.phase === "investigating"} cited />
@@ -492,7 +493,7 @@ function TurnView({ t, onDecide, onReplay, isLast }: {
         <div className="flex flex-col gap-2">
           <Receipts actions={t.rows.flatMap((r) => (r.result ? [r.result] : []))} seconds={t.ms / 1000} />
           {t.plan && t.tally.executed > 0 && (
-            <button type="button" onClick={() => onReplay(t.plan!.id, t.snapshot?.name ?? "this account")}
+            <button type="button" data-press onClick={() => onReplay(t.plan!.id, t.snapshot?.name ?? "this account")}
               className="group flex items-center gap-2 self-start rounded-[9px] border border-line bg-surface px-2.5 py-1.5 text-[12px] text-ink-2 transition-colors duration-150 hover:bg-hover-2 hover:text-ink">
               <Glyph d={PATHS.retry} size={12} />
               Replay this exact plan
@@ -578,7 +579,7 @@ function Welcome({ connectors, modelReady, hint, onPick }: {
   const missing = connectors.filter((c) => !c.configured);
   const blocked = !modelReady || Boolean(hint);
   return (
-    <div className="flex flex-col gap-4 pt-6" style={{ animation: "fade-up 500ms cubic-bezier(0.23,1,0.32,1) both" }}>
+    <div className="flex flex-col gap-4 pt-6" style={{ animation: "fade-up 500ms var(--ease-out) both" }}>
       <div>
         <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-ink">Who is quietly about to churn?</h2>
         <p className="mt-1.5 max-w-[56ch] text-[13.5px] leading-relaxed text-ink-2">
@@ -590,9 +591,9 @@ function Welcome({ connectors, modelReady, hint, onPick }: {
 
       <div className="flex flex-col gap-1">
         {STARTERS.map((s, i) => (
-          <button key={s} onClick={() => onPick(s)} disabled={blocked}
+          <button key={s} data-press onClick={() => onPick(s)} disabled={blocked}
             className="group flex items-center gap-2.5 rounded-[10px] border border-line bg-surface px-3 py-2.5 text-left text-[13px] text-ink transition-colors duration-150 hover:bg-hover-2 disabled:opacity-40"
-            style={{ animation: `fade-up 400ms cubic-bezier(0.23,1,0.32,1) ${120 + i * 70}ms both` }}>
+            style={{ animation: `fade-up 400ms var(--ease-out) ${120 + i * 70}ms both` }}>
             <span className="text-ink-3 transition-colors group-hover:text-accent-ink">
               <Glyph d={PATHS.bolt} size={13} strokeWidth={2} />
             </span>

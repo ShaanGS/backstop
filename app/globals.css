@@ -34,6 +34,22 @@
   --radius-card: 14px;
   --radius-chip: 7px;
 
+  /* Motion. The built-in CSS easings are too weak to read as intentional, so
+     both curves are named once here instead of being retyped at 25 call sites.
+     --ease-out is for anything entering, exiting or responding to a press;
+     --ease-in-out for something already on screen moving to a new position. */
+  /* Image edge. Pure black in light, pure white in dark, never a tinted
+     neutral: a tinted outline picks up the surface behind it and reads as dirt
+     along the image edge. */
+  --image-outline: rgb(0 0 0 / 0.1);
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+
+  /* One press scale for the whole app. 0.96 exactly: below 0.95 the button
+     looks like it is being squashed rather than pressed. */
+  --press: 0.96;
+
   --shadow-hairline: inset 0 0 0 1px var(--line);
   --shadow-card: 0 1px 2px rgba(16, 18, 22, 0.04), 0 1px 1px rgba(16, 18, 22, 0.03),
     inset 0 0 0 1px var(--line);
@@ -70,6 +86,7 @@
     --amber: #f0a336;
     --amber-tint: #33220c;
 
+    --image-outline: rgb(255 255 255 / 0.1);
     --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), inset 0 0 0 1px var(--line);
     --shadow-raised: 0 16px 40px -10px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.3),
       inset 0 0 0 1px var(--line);
@@ -104,6 +121,7 @@
   --amber: #f0a336;
   --amber-tint: #33220c;
 
+  --image-outline: rgb(255 255 255 / 0.1);
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), inset 0 0 0 1px var(--line);
   --shadow-raised: 0 16px 40px -10px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.3),
     inset 0 0 0 1px var(--line);
@@ -140,6 +158,9 @@
   --radius-card: var(--radius-card);
   --radius-chip: var(--radius-chip);
 
+  --ease-out: var(--ease-out);
+  --ease-in-out: var(--ease-in-out);
+
   --shadow-hairline: var(--shadow-hairline);
   --shadow-card: var(--shadow-card);
   --shadow-raised: var(--shadow-raised);
@@ -169,9 +190,9 @@
   --font-mono: var(--font-mono-loaded), ui-monospace, "SF Mono", Menlo, monospace;
 
   --animate-spin: spin 1s linear infinite;
-  --animate-pop-in: pop-in 300ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  --animate-pop-in: pop-in 300ms var(--ease-out) both;
   --animate-fade-in: fade-in 200ms ease-out both;
-  --animate-fade-up: fade-up 450ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  --animate-fade-up: fade-up 450ms var(--ease-out) both;
   --animate-eq-bounce: eq-bounce 900ms ease-in-out infinite;
 }
 
@@ -217,7 +238,7 @@ body {
   background-repeat: no-repeat;
   background-position: 0 100%;
   background-size: 0% 1px;
-  transition: background-size 220ms cubic-bezier(0.23, 1, 0.32, 1);
+  transition: background-size 220ms var(--ease-out);
 }
 .animated-underline:hover { background-size: 100% 1px; }
 
@@ -231,6 +252,41 @@ body {
   border: 2px solid transparent; background-clip: content-box;
 }
 .scroll-slim::-webkit-scrollbar-track { background: transparent; }
+
+/* Press feedback.
+ *
+ * Every pressable surface in the app answers a click the same way, from the
+ * primary button down to a row in a list. It is the cheapest way to make an
+ * interface feel like it heard you, and it costs nothing at any frequency
+ * because it is instant rather than animated.
+ *
+ * `scale` is set as its own property rather than through `transform`, so a
+ * press composes with any translate or rotate an element already carries
+ * instead of overwriting it. The transition names one property on purpose.
+ *
+ * Reduced motion is handled by the global block below, which collapses the
+ * duration; the scale still applies, so the feedback survives without motion. */
+.press, [data-press] {
+  transition-property: scale;
+  transition-duration: 150ms;
+  transition-timing-function: var(--ease-out);
+}
+.press:active:not(:disabled):not([aria-disabled="true"]),
+[data-press]:active:not(:disabled):not([aria-disabled="true"]) {
+  scale: var(--press);
+}
+
+/* Rows in a dense list are pressed far more often than a button is, so they
+   take a shallower version. Same language, less shout. */
+.press-row, [data-press-row] {
+  transition-property: scale;
+  transition-duration: 150ms;
+  transition-timing-function: var(--ease-out);
+}
+.press-row:active:not(:disabled),
+[data-press-row]:active:not(:disabled) {
+  scale: 0.99;
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

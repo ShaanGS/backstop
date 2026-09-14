@@ -14,7 +14,7 @@ export function ToolTrace({ calls }: { calls: { id: string; name: string; summar
       {calls.map((c, i) => (
         <span key={c.id} title={c.summary}
           className="inline-flex h-6 items-center gap-1.5 rounded-chip bg-inset px-2 font-mono text-[11px] text-ink-2 shadow-hairline"
-          style={{ animation: `pop-in 240ms cubic-bezier(0.23,1,0.32,1) ${i * 40}ms both` }}>
+          style={{ animation: `pop-in 240ms var(--ease-out) ${i * 40}ms both` }}>
           <span className={cn("size-1.5 rounded-full", c.summary ? "bg-green" : "bg-accent")}
             style={c.summary ? undefined : { animation: "pulse-ring 1.2s ease-out infinite" }} />
           {c.name}
@@ -44,7 +44,7 @@ export function PolicyPanel({ decisions }: { decisions: PolicyDecision[] }) {
         const o = OUTCOME[d.outcome];
         return (
           <div key={d.rule + i} className="flex items-start gap-2.5 rounded-card bg-surface p-2.5 shadow-card"
-            style={{ animation: `fade-up 340ms cubic-bezier(0.23,1,0.32,1) ${i * 60}ms both` }}>
+            style={{ animation: `fade-up 340ms var(--ease-out) ${i * 60}ms both` }}>
             <span className={cn("mt-px flex size-5 shrink-0 items-center justify-center rounded-full", o.cls)}>
               <Glyph d={o.icon} size={11} strokeWidth={2.6} />
             </span>
@@ -74,7 +74,7 @@ export function ApprovalGate({
   onDecide: (approved: boolean) => void;
 }) {
   return (
-    <div className="rounded-card bg-surface p-3.5 shadow-raised" style={{ animation: "pop-in 280ms cubic-bezier(0.23,1,0.32,1) both" }}>
+    <div className="rounded-card bg-surface p-3.5 shadow-raised" style={{ animation: "pop-in 280ms var(--ease-out) both" }}>
       <div className="flex items-center gap-2">
         <span className="flex size-6 items-center justify-center rounded-full bg-amber-tint text-amber">
           <Glyph d={PATHS.pause} size={13} strokeWidth={2.4} />
@@ -92,11 +92,11 @@ export function ApprovalGate({
         ))}
       </div>
       <div className="mt-3 flex gap-2">
-        <button type="button" disabled={busy} onClick={() => onDecide(true)}
-          className="flex h-8 flex-1 items-center justify-center gap-1.5 rounded-[9px] bg-ink text-[12.5px] font-medium text-surface transition-[transform,opacity] duration-150 enabled:active:scale-[0.98] disabled:opacity-50">
+        <button type="button" data-press disabled={busy} onClick={() => onDecide(true)}
+          className="flex h-8 flex-1 items-center justify-center gap-1.5 rounded-[9px] bg-ink text-[12.5px] font-medium text-surface press transition-[opacity] duration-150 disabled:opacity-50">
           {busy ? "Executing…" : `Approve & run ${actions.length} actions`}
         </button>
-        <button type="button" disabled={busy} onClick={() => onDecide(false)}
+        <button type="button" data-press disabled={busy} onClick={() => onDecide(false)}
           className="flex h-8 items-center justify-center rounded-[9px] bg-inset px-3 text-[12.5px] font-medium text-ink-2 shadow-hairline transition-colors duration-150 hover:text-ink disabled:opacity-50">
           Reject
         </button>
@@ -137,6 +137,7 @@ export function AccountCard({ a, active, onClick }: { a: AccountRow; active: boo
   return (
     <button
       type="button"
+      data-press-row
       onClick={onClick}
       className={cn(
         "flex w-full items-center gap-2.5 rounded-[10px] px-2 py-2 text-left transition-colors duration-150",
