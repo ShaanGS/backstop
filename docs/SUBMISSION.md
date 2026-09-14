@@ -97,3 +97,44 @@ pnpm install && pnpm eval
 No API keys required. Fixture mode stubs only the third-party network boundary — every Keel
 gate (policy, idempotency, retry, read-back verification, ledger) executes for real, which is
 why this same command runs in CI on every push with no credentials configured.
+
+---
+
+## Elevator pitch (200 char limit — this is 196)
+
+Every churn tool tells you an account is at risk. None tell you why. Keel investigates across Stripe, Linear, Slack, Notion and Resend, finds the cause, acts on it, and proves every action landed.
+
+---
+
+## Built with (Devpost tags)
+
+typescript · react · next.js · tailwindcss · anthropic-claude · vercel-ai-sdk · zod ·
+stripe · linear · slack · notion · resend · vercel · github-actions · node.js
+
+---
+
+## Try it out links
+
+- https://keel-nine-flame.vercel.app — live app
+- https://github.com/ShaanGS/keel — source
+
+---
+
+## Video demo link
+
+https://drive.google.com/file/d/1GM7cbdqAG-AqoLbLXqLp79fPPZdnH1D5/view?usp=sharing
+
+---
+
+## Image gallery — drag these in from the repo
+
+1. `docs/landing.png` — product page. Lead image.
+2. `docs/console.png` — the operator console.
+3. `docs/banner.png` — repo banner.
+
+---
+
+## Project story
+
+The full "About the project" markdown is in [DEVPOST-STORY.md](DEVPOST-STORY.md),
+following Devpost's four prompts: inspiration, how I built it, challenges, what I learned.
