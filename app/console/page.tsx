@@ -53,6 +53,7 @@ export default function Console() {
   const [modelReady, setModelReady] = useState(true);
   const [accounts, setAccounts] = useState<AccountRow[]>([]);
   const [ready, setReady] = useState<boolean | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const [hint, setHint] = useState<string | null>(null);
   const [theme, setTheme] = useState<"light" | "dark" | null>(null);
   const [turns, setTurns] = useState<Turn[]>([]);
@@ -73,11 +74,19 @@ export default function Console() {
     }).catch(() => {});
   }, []);
 
+  /* A run changes an account's state, so the list is re-read when one finishes.
+     That read goes to Stripe and Linear live and takes several seconds, and it
+     used to reset `ready` to null first — which replaced the whole sidebar with
+     skeletons every time, losing the operator's place to refetch data that was
+     still perfectly readable. Keep showing what we have and swap it when the
+     new data lands; `ready` is already null on first load, so the skeletons
+     still appear exactly once, when there is genuinely nothing to show. */
   const loadAccounts = useCallback((fresh = false) => {
-    setReady(null);
+    setRefreshing(true);
     fetch(`/api/accounts${fresh ? "?fresh=1" : ""}`).then((r) => r.json()).then((d) => {
       setAccounts(d.accounts ?? []); setReady(Boolean(d.ready)); setHint(d.reason ?? null);
-    }).catch((e) => { setReady(false); setHint(e.message); });
+    }).catch((e) => { setReady(false); setHint(e.message); })
+      .finally(() => setRefreshing(false));
   }, []);
   useEffect(() => { loadAccounts(); }, [loadAccounts]);
 
@@ -236,9 +245,12 @@ export default function Console() {
         <div className="flex min-h-0 flex-1 flex-col px-3">
           <div className="flex items-center px-1.5 pb-1">
             <p className="text-[10px] font-semibold tracking-[0.06em] text-ink-3 uppercase">Your customers</p>
-            <button onClick={() => loadAccounts(true)} disabled={busy} aria-label="Refresh accounts" data-press
+            <button onClick={() => loadAccounts(true)} disabled={busy || refreshing}
+              aria-label="Refresh accounts" aria-busy={refreshing} data-press
               className="ml-auto flex size-5 items-center justify-center rounded-[6px] text-ink-3 transition-colors hover:bg-hover hover:text-ink disabled:opacity-40">
-              <Glyph d={PATHS.retry} size={11} />
+              <span className={refreshing ? "animate-[spin_900ms_linear_infinite]" : undefined}>
+                <Glyph d={PATHS.retry} size={11} />
+              </span>
             </button>
           </div>
           <div className="scroll-slim -mx-1 flex min-h-0 flex-1 flex-col overflow-y-auto px-1 pb-3">
