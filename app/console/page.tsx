@@ -7,6 +7,7 @@ import Composer, { type MentionAccount } from "@/components/composer";
 import { AccountCard, ApprovalGate, PolicyPanel, type AccountRow } from "@/components/run-panels";
 import CaseFile, { Receipts } from "@/components/case-file";
 import Ledger from "@/components/ledger";
+import Home from "@/components/home";
 import type { LedgerEntry, LedgerSummary } from "@/lib/ledger";
 import { AccountSkeleton, ConnectorRow } from "@/components/states";
 import { ToolCard, ToolLog } from "@/components/agents/tool-card";
@@ -188,7 +189,7 @@ export default function Console() {
 
   /* ── the ledger — what Keel has done, read back from disk ─────────── */
 
-  const [view, setView] = useState<"console" | "ledger">("console");
+  const [view, setView] = useState<"home" | "agent" | "ledger">("home");
   const [ledger, setLedger] = useState<{
     entries: LedgerEntry[];
     summary: LedgerSummary;
@@ -203,7 +204,7 @@ export default function Console() {
     } catch { /* the console still works without it */ }
   }, []);
 
-  useEffect(() => { if (view === "ledger") void loadLedger(); }, [view, loadLedger]);
+  useEffect(() => { if (view !== "agent") void loadLedger(); }, [view, loadLedger]);
   /* Re-read once a run settles: the ledger is written by the server mid-run. */
   useEffect(() => { if (!busy) void loadLedger(); }, [busy, loadLedger]);
 
@@ -264,12 +265,12 @@ export default function Console() {
             <p className="text-[11.5px] text-ink-3">Finds the customer about to leave, acts, and proves what it did</p>
           </div>
           <div className="ml-auto flex items-center gap-2">
-            {view === "console" && current && busy && (
+            {view === "agent" && current && busy && (
               <span className="font-mono text-[11px] text-ink-3 tabular-nums">{(current.ms / 1000).toFixed(1)}s</span>
             )}
-            {view === "console" && current && <StatusPill phase={current.phase} />}
+            {view === "agent" && current && <StatusPill phase={current.phase} />}
             <div role="tablist" className="flex items-center gap-0.5 rounded-[9px] bg-inset p-0.5">
-              {(["console", "ledger"] as const).map((v) => (
+              {(["home", "agent", "ledger"] as const).map((v) => (
                 <button
                   key={v}
                   role="tab"
@@ -290,7 +291,19 @@ export default function Console() {
           </div>
         </header>
 
-        {view === "ledger" ? (
+        {view === "home" ? (
+          <div className="scroll-slim min-h-0 flex-1 overflow-y-auto px-5 py-5">
+            <Home
+              accounts={accounts}
+              ledger={ledger}
+              connectors={connectors}
+              onInvestigate={(a) => {
+                setView("agent");
+                ask(`Investigate @${a.name} and run the save play if the evidence warrants it.`, a.id);
+              }}
+            />
+          </div>
+        ) : view === "ledger" ? (
           <div className="scroll-slim min-h-0 flex-1 overflow-y-auto px-5 py-2">
             <Ledger
               entries={ledger?.entries ?? []}

@@ -40,6 +40,10 @@
   --shadow-raised: 0 12px 32px -8px rgba(16, 18, 22, 0.16), 0 2px 6px rgba(16, 18, 22, 0.06),
     inset 0 0 0 1px var(--line);
 
+  --chart-healthy: #128a5e;
+  --chart-watch: #c59000;
+  --chart-risk: #c62a6b;
+
   color-scheme: light;
 }
 
@@ -70,6 +74,10 @@
     --shadow-raised: 0 16px 40px -10px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.3),
       inset 0 0 0 1px var(--line);
 
+    --chart-healthy: #22ad78;
+    --chart-watch: #bf8624;
+    --chart-risk: #d64a79;
+
     color-scheme: dark;
   }
 }
@@ -99,6 +107,10 @@
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), inset 0 0 0 1px var(--line);
   --shadow-raised: 0 16px 40px -10px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.3),
     inset 0 0 0 1px var(--line);
+
+    --chart-healthy: #22ad78;
+  --chart-watch: #bf8624;
+  --chart-risk: #d64a79;
 
   color-scheme: dark;
 }
