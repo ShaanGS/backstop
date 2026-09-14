@@ -30,8 +30,10 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files — every real one stays out; the template is the whole point of a
+# template, and README setup step 2 is "cp .env.example .env.local".
 .env*
+!.env.example
 
 # vercel
 .vercel

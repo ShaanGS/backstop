@@ -143,6 +143,7 @@ export type AuditEvent = {
     | "action_executed"
     | "action_failed"
     | "verification"
+    | "run_metrics"
     | "run_finished";
   accountId?: string;
   detail: Record<string, unknown>;

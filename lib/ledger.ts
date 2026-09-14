@@ -11,6 +11,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { readAudit } from "./audit";
 import { listAccounts } from "./store";
+import type { RunMetrics } from "./telemetry";
 import type { ActionType, AuditEvent, ConnectorId } from "./types";
 
 /** Which app an action lands in. One definition, used by every surface. */
@@ -149,4 +150,86 @@ export function readEvalScore(): { passed: number; total: number; mustNot: numbe
   } catch {
     return null;
   }
+}
+
+
+/* ── run telemetry ─────────────────────────────────────────────────────── */
+
+export type RunMetricsRow = RunMetrics & { runId: string; ts: string; accountName: string };
+
+export type MetricsSummary = {
+  runs: number;
+  /** Median, not mean: one slow cold start should not define the typical run. */
+  investigateMs: number;
+  executeMs: number;
+  tokens: number;
+  steps: number;
+  /** Share of input tokens served from the prompt cache, 0-1. */
+  cacheHitRate: number;
+  /** Summed across runs. Present only when the operator configured rates. */
+  estimatedCostUsd?: number;
+  latest?: RunMetricsRow;
+};
+
+function median(xs: number[]): number {
+  if (!xs.length) return 0;
+  const s = [...xs].sort((a, b) => a - b);
+  const mid = s.length >> 1;
+  return s.length % 2 ? s[mid] : Math.round((s[mid - 1] + s[mid]) / 2);
+}
+
+function num(v: unknown): number {
+  return typeof v === "number" && Number.isFinite(v) ? v : 0;
+}
+
+/**
+ * What runs actually cost, rebuilt from the audit trail like everything else
+ * here. Runs parked at the approval gate report executeMs 0 — real, and the
+ * reason the two phases are timed separately rather than summed.
+ */
+export function readRunMetrics(): { rows: RunMetricsRow[]; summary: MetricsSummary } {
+  const names = new Map(listAccounts().map((a) => [a.id, a.name]));
+  const rows: RunMetricsRow[] = [];
+
+  for (const e of readAudit()) {
+    if (e.kind !== "run_metrics") continue;
+    const d = e.detail;
+    rows.push({
+      runId: e.runId,
+      ts: e.ts,
+      accountName: names.get(e.accountId ?? "") ?? e.accountId ?? "—",
+      model: str(d.model) ?? "unknown",
+      steps: num(d.steps),
+      toolCalls: num(d.toolCalls),
+      inputTokens: num(d.inputTokens),
+      outputTokens: num(d.outputTokens),
+      cachedInputTokens: num(d.cachedInputTokens),
+      investigateMs: num(d.investigateMs),
+      executeMs: num(d.executeMs),
+      totalMs: num(d.totalMs),
+      estimatedCostUsd: typeof d.estimatedCostUsd === "number" ? d.estimatedCostUsd : undefined,
+    });
+  }
+  rows.sort((a, b) => b.ts.localeCompare(a.ts));
+
+  const priced = rows.filter((r) => r.estimatedCostUsd !== undefined);
+  const totalIn = rows.reduce((n, r) => n + r.inputTokens, 0);
+  const totalCached = rows.reduce((n, r) => n + r.cachedInputTokens, 0);
+
+  return {
+    rows,
+    summary: {
+      runs: rows.length,
+      investigateMs: median(rows.map((r) => r.investigateMs)),
+      /* Only runs that reached phase 2 say anything about how long phase 2 takes. */
+      executeMs: median(rows.filter((r) => r.executeMs > 0).map((r) => r.executeMs)),
+      tokens: median(rows.map((r) => r.inputTokens + r.outputTokens)),
+      steps: median(rows.map((r) => r.steps)),
+      cacheHitRate: totalIn ? totalCached / totalIn : 0,
+      estimatedCostUsd: priced.length
+        ? Math.round(priced.reduce((n, r) => n + (r.estimatedCostUsd ?? 0), 0) * 10_000) / 10_000
+        : undefined,
+      latest: rows[0],
+    },
+  };
 }

@@ -16,6 +16,7 @@ import { executePlan } from "../execute";
 import { evaluatePolicy, requiresApproval, survivingActions } from "../policy";
 import { buildSnapshot, type AccountSnapshot } from "../store";
 import type { ExecutedAction, Plan, PolicyDecision, ProposedAction } from "../types";
+import { estimateCost, readUsage, type RunMetrics } from "../telemetry";
 import { SYSTEM_PROMPT } from "./system-prompt";
 import { buildTools, type ProposalSink } from "./tools";
 
@@ -32,6 +33,7 @@ export type AgentEvent =
   | { type: "awaiting_approval"; planId: string; rule: string; reason: string; actions: ProposedAction[] }
   | { type: "action_started"; index: number; action: ProposedAction }
   | { type: "action_result"; index: number; result: ExecutedAction }
+  | { type: "metrics"; metrics: RunMetrics }
   | { type: "run_finished"; runId: string; executed: number; skipped: number; blocked: number; failed: number }
   | { type: "error"; message: string };
 
@@ -118,10 +120,16 @@ function markCompleted(plan: Plan, runId: string) {
 
 /* ── phase 1: model-driven investigation ───────────────────────────────── */
 
+export type Investigation = {
+  plan: Plan;
+  /** Phase-1 telemetry. Phase 2 timing is added by the caller that runs it. */
+  partial: Omit<RunMetrics, "executeMs" | "totalMs" | "estimatedCostUsd">;
+};
+
 export async function investigate(
   emit: Emit,
   opts: { runId: string; instruction: string },
-): Promise<Plan> {
+): Promise<Investigation> {
   const sink: ProposalSink = { plan: null };
   const tools = buildTools(
     sink,
@@ -132,13 +140,27 @@ export async function investigate(
     },
   );
 
+  const startedAt = Date.now();
+  let toolCalls = 0;
+
   const result = streamText({
     model: anthropic(MODEL),
-    system: SYSTEM_PROMPT,
+    /* A cache breakpoint on the system message covers everything ahead of it in
+       the request — the tool schemas and the prompt itself — which is the part
+       that is byte-identical on every step of every run. Without it each step
+       re-reads the whole preamble: the telemetry read 26,782 input tokens and
+       0 cached on a four-step run, which is what prompted this. */
+    system: {
+      role: "system",
+      content: SYSTEM_PROMPT,
+      providerOptions: { anthropic: { cacheControl: { type: "ephemeral" } } },
+    },
     prompt: opts.instruction,
     tools,
     stopWhen: stepCountIs(12),
-    temperature: 0.2,
+    /* No temperature: this model does not accept one, and the SDK warns and
+       drops it. A setting that silently does nothing is worse than no setting —
+       it reads like a determinism guarantee the run never had. */
   });
 
   // The model speaks, calls a tool, then speaks again — each is its own text
@@ -153,6 +175,7 @@ export async function investigate(
       emit({ type: "thinking_delta", text: part.text });
     }
     else if (part.type === "tool-call") {
+      toolCalls++;
       emit({ type: "tool_call", id: part.toolCallId, name: part.toolName, args: part.input });
     } else if (part.type === "tool-result") {
       const out = part.output as Record<string, unknown>;
@@ -189,7 +212,21 @@ export async function investigate(
   }
 
   if (!sink.plan) throw new Error("The agent finished without proposing a save play.");
-  return sink.plan;
+
+  // Resolved only once the stream has fully drained, which the loop above has
+  // just guaranteed. Reading it earlier would report a partial run.
+  const [usage, steps] = await Promise.all([result.totalUsage, result.steps]);
+
+  return {
+    plan: sink.plan,
+    partial: {
+      model: MODEL,
+      steps: steps.length,
+      toolCalls,
+      ...readUsage(usage),
+      investigateMs: Date.now() - startedAt,
+    },
+  };
 }
 
 /* ── phase 2: deterministic execution ──────────────────────────────────── */
@@ -201,6 +238,7 @@ async function runPipeline(
   decisions: PolicyDecision[],
   runId: string,
 ) {
+  const startedAt = Date.now();
   const results = await executePlan(plan, snapshot, decisions, {
     runId,
     onEvent: (e) => {
@@ -215,10 +253,11 @@ async function runPipeline(
     blocked: results.filter((r) => r.status === "blocked_by_policy").length,
     failed: results.filter((r) => r.status === "failed").length,
   };
+  const executeMs = Date.now() - startedAt;
   markCompleted(plan, runId);
-  record({ runId, kind: "run_finished", accountId: plan.accountId, detail: tally });
+  record({ runId, kind: "run_finished", accountId: plan.accountId, detail: { ...tally, executeMs } });
   emit({ type: "run_finished", runId, ...tally });
-  return results;
+  return { results, executeMs };
 }
 
 /** Full run: investigate, police, then either execute or park for approval. */
@@ -227,7 +266,20 @@ export async function runAgent(emit: Emit, opts: { instruction: string; runId?: 
   emit({ type: "run_started", runId, at: new Date().toISOString() });
   record({ runId, kind: "run_started", detail: { instruction: opts.instruction, model: MODEL } });
 
-  const plan = await investigate(emit, { runId, instruction: opts.instruction });
+  const { plan, partial } = await investigate(emit, { runId, instruction: opts.instruction });
+
+  /* Phase 1 is done and measured. Phase 2 may or may not run in this request —
+     an approval gate parks it — so executeMs is filled in at the point we know. */
+  const publishMetrics = (executeMs: number) => {
+    const metrics: RunMetrics = {
+      ...partial,
+      executeMs,
+      totalMs: partial.investigateMs + executeMs,
+      estimatedCostUsd: estimateCost(partial),
+    };
+    record({ runId, kind: "run_metrics", accountId: plan.accountId, detail: metrics });
+    emit({ type: "metrics", metrics });
+  };
 
   // Re-read the account at decision time and attach the evidence the plan rests on.
   const snapshot = await buildSnapshot(plan.accountId);
@@ -252,10 +304,12 @@ export async function runAgent(emit: Emit, opts: { instruction: string; runId?: 
       reason: gate.reason,
       actions: survivingActions(decisions, plan),
     });
+    publishMetrics(0); // phase 2 has not run; saying so is the accurate reading
     return { plan, snapshot, decisions, awaitingApproval: true as const };
   }
 
-  await runPipeline(emit, plan, snapshot, decisions, runId);
+  const { executeMs } = await runPipeline(emit, plan, snapshot, decisions, runId);
+  publishMetrics(executeMs);
   return { plan, snapshot, decisions, awaitingApproval: false as const };
 }
 

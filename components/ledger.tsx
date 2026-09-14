@@ -3,7 +3,8 @@
 import { useMemo } from "react";
 import { BrandMark, Glyph, PATHS } from "./icons";
 import { cn } from "@/lib/utils";
-import type { LedgerEntry, LedgerSummary } from "@/lib/ledger";
+import type { LedgerEntry, LedgerSummary, MetricsSummary } from "@/lib/ledger";
+import { formatMs, formatTokens } from "@/lib/telemetry";
 
 /* ─────────────────────────────────────────────────────────
  * THE LEDGER
@@ -117,11 +118,50 @@ function Row({ e }: { e: LedgerEntry }) {
   );
 }
 
+/**
+ * What a run costs. The two phases are reported apart rather than summed,
+ * because the gap between them is the architecture: phase 1 is the model
+ * investigating, phase 2 is policy, idempotency, execution and verification,
+ * and phase 2 never calls a model. One of those numbers should be small.
+ */
+function RunCost({ m }: { m: MetricsSummary }) {
+  const priced = m.estimatedCostUsd !== undefined;
+  const figures: { v: string; label: string; hint: string }[] = [
+    { v: formatMs(m.investigateMs), label: "Investigate", hint: `${m.steps} model steps` },
+    { v: m.executeMs ? formatMs(m.executeMs) : "\u2014", label: "Execute", hint: "no model calls" },
+    { v: formatTokens(m.tokens), label: "Tokens", hint: `${Math.round(m.cacheHitRate * 100)}% cached` },
+    {
+      v: priced ? `${m.estimatedCostUsd!.toFixed(2)}` : String(m.runs),
+      label: priced ? "Spend" : "Runs",
+      hint: priced ? "at configured rates" : "measured, not sampled",
+    },
+  ];
+
+  return (
+    <div className="mt-2 rounded-card bg-surface px-3.5 py-3 shadow-card">
+      <div className="flex items-baseline justify-between">
+        <p className="text-[11px] font-medium tracking-[0.04em] text-ink-2 uppercase">What a run costs</p>
+        <span className="text-[10.5px] text-ink-3">median of {m.runs} run{m.runs === 1 ? "" : "s"}</span>
+      </div>
+      <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2.5 sm:grid-cols-4">
+        {figures.map((f) => (
+          <div key={f.label}>
+            <p className="text-[17px] leading-none font-semibold tracking-[-0.03em] text-ink tabular-nums">{f.v}</p>
+            <p className="mt-1 text-[11px] leading-none font-medium text-ink-2">{f.label}</p>
+            <p className="mt-0.5 text-[10.5px] leading-snug text-ink-3">{f.hint}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function Ledger({
-  entries, summary, evals, ephemeral,
+  entries, summary, metrics, evals, ephemeral,
 }: {
   entries: LedgerEntry[];
   summary: LedgerSummary;
+  metrics: MetricsSummary | null;
   evals: { passed: number; total: number; mustNot: number };
   ephemeral?: boolean;
 }) {
@@ -165,6 +205,8 @@ export default function Ledger({
         <span>{evals.mustNot} of them assert Keel does <em className="not-italic text-ink">nothing</em></span>
         <span className="ml-auto font-mono text-[10.5px] text-ink-3">pnpm eval</span>
       </div>
+
+      {metrics && metrics.runs > 0 && <RunCost m={metrics} />}
 
       {/* On a serverless host the only writable path is /tmp, which dies with the
           instance. Every gate still runs, but the ledger is no longer durable —

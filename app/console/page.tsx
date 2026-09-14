@@ -8,7 +8,8 @@ import { AccountCard, ApprovalGate, PolicyPanel, type AccountRow } from "@/compo
 import CaseFile, { Receipts } from "@/components/case-file";
 import Ledger from "@/components/ledger";
 import Home from "@/components/home";
-import type { LedgerEntry, LedgerSummary } from "@/lib/ledger";
+import type { LedgerEntry, LedgerSummary, MetricsSummary } from "@/lib/ledger";
+import { formatMs, formatTokens, type RunMetrics } from "@/lib/telemetry";
 import { AccountSkeleton, ConnectorRow } from "@/components/states";
 import { ToolCard, ToolLog } from "@/components/agents/tool-card";
 import LoadingState from "@/components/loading-state";
@@ -34,6 +35,7 @@ type Turn = {
   gate: { planId: string; rule: string; reason: string; actions: ProposedAction[] } | null;
   rows: RowState[];
   tally: { executed: number; skipped: number; blocked: number; failed: number } | null;
+  metrics: RunMetrics | null;
   error: string | null;
   startedAt: number;
   ms: number;
@@ -41,7 +43,7 @@ type Turn = {
 
 const newTurn = (instruction: string): Turn => ({
   id: `t_${Date.now().toString(36)}`,
-  instruction, phase: "investigating", reasoning: "", tools: [], plan: null, snapshot: null,
+  instruction, phase: "investigating", reasoning: "", tools: [], plan: null, snapshot: null, metrics: null,
   evidence: [], decisions: [], gate: null, rows: [], tally: null, error: null, startedAt: Date.now(), ms: 0,
 });
 
@@ -123,6 +125,7 @@ export default function Console() {
         patch((t) => ({ ...t, rows: t.rows.map((r, i) => (i === e.index ? { ...r, status: e.result.status, result: e.result } : r)) })); break;
       case "run_finished":
         patch((t) => ({ ...t, phase: "done", gate: null, tally: { executed: e.executed, skipped: e.skipped, blocked: e.blocked, failed: e.failed } })); break;
+      case "metrics": patch((t) => ({ ...t, metrics: e.metrics })); break;
       case "error": patch((t) => ({ ...t, phase: "error", error: e.message })); break;
     }
   }
@@ -193,6 +196,7 @@ export default function Console() {
   const [ledger, setLedger] = useState<{
     entries: LedgerEntry[];
     summary: LedgerSummary;
+    metrics: MetricsSummary | null;
     evals: { passed: number; total: number; mustNot: number } | null;
     ephemeral?: boolean;
   } | null>(null);
@@ -310,6 +314,7 @@ export default function Console() {
               summary={ledger?.summary ?? {
                 total: 0, executed: 0, verified: 0, blocked: 0, skipped: 0, failed: 0, runs: 0, apps: [],
               }}
+              metrics={ledger?.metrics ?? null}
               evals={ledger?.evals ?? { passed: 0, total: 0, mustNot: 0 }}
               ephemeral={ledger?.ephemeral}
             />
@@ -494,6 +499,27 @@ function TurnView({ t, onDecide, onReplay, isLast }: {
             </button>
           )}
         </div>
+      )}
+
+      {t.metrics && (
+        /* The run's own cost, stated where the run happened. The two phases are
+           shown apart because that gap is the claim: the half that decides is
+           the slow half, and the half that acts never calls a model. */
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 px-0.5 font-mono text-[10.5px] text-ink-3">
+          <span>{t.metrics.steps} steps</span>
+          <span aria-hidden>·</span>
+          <span>{t.metrics.toolCalls} tool calls</span>
+          <span aria-hidden>·</span>
+          <span>{formatTokens(t.metrics.inputTokens + t.metrics.outputTokens)} tokens</span>
+          <span aria-hidden>·</span>
+          <span>investigate {formatMs(t.metrics.investigateMs)}</span>
+          {t.metrics.executeMs > 0 && (
+            <>
+              <span aria-hidden>·</span>
+              <span className="text-ink-2">execute {formatMs(t.metrics.executeMs)}</span>
+            </>
+          )}
+        </p>
       )}
 
       {t.error && (

@@ -209,6 +209,38 @@ this same pipeline with the third-party network boundary stubbed, and those acti
 happened to a real customer — letting them share the live file would make the ledger claim
 work it never did.
 
+### What a run costs, measured
+
+Every run records its own token use and, separately, the wall-clock of each phase
+([`lib/telemetry.ts`](lib/telemetry.ts)). The two phases are never summed into one
+number, because the gap between them is the architecture claim stated as a measurement:
+
+| | Phase 1 — investigate | Phase 2 — execute |
+|---|---|---|
+| What runs | the model, choosing what to read | policy, idempotency, execution, read-back |
+| Typical | **~50-65s**, 4-5 model steps, 5-7 tool calls | **~4-5s** |
+| Model calls | all of them | **zero** |
+
+Phase 2 is an order of magnitude faster than phase 1 for a reason that is not an
+optimisation: it never waits on a model. If that number ever drifts toward phase 1's,
+something has started asking the model questions during execution.
+
+Instrumenting this immediately found two things that had been invisible:
+
+- **`temperature: 0.2` was doing nothing.** The model does not accept the parameter and
+  the SDK was silently dropping it. A setting that reads like a determinism guarantee and
+  isn't one is worse than no setting; it's gone.
+- **The prompt cache was completely cold** — 26,782 input tokens, 0 cached, on a run whose
+  tool schemas and system prompt are byte-identical at every step. One cache breakpoint on
+  the system message took cached input from **0% to 33-52%**.
+
+Neither was findable by reading the code. That is the argument for measuring.
+
+**On cost:** no dollar figure is printed unless you supply the rates
+(`KEEL_PRICE_INPUT_PER_MTOK` / `KEEL_PRICE_OUTPUT_PER_MTOK`). A price table baked into a
+repo is stale the week after it's written, and an unsourced number on a dashboard is worse
+than an absent one. Tokens and latency are measured facts and are always shown.
+
 ### The policy rules
 
 | Rule | Trigger | Effect |

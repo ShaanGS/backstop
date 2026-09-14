@@ -50,6 +50,7 @@ the model emits can bypass them, which is also what makes the eval suite meaning
 | `lib/execute.ts` | the five-gate execution pipeline |
 | `lib/idempotency.ts` | `sha256(accountId + actionType + planId)` action ledger |
 | `lib/ledger.ts` | the audit trail read back as a durable record |
+| `lib/telemetry.ts` | per-run token use and per-phase latency |
 | `lib/connectors/` | one module per app — read, write, and `verify*` |
 | `evals/` | 18 cases and the runner that drives the real pipeline |
 | `app/page.tsx` | product page · `app/console/` the operator console |
@@ -66,6 +67,15 @@ the model emits can bypass them, which is also what makes the eval suite meaning
 - **`RESEND_TO_OVERRIDE`.** Redirects every customer email to one address and keeps
   the intended recipient in the subject and an `X-Keel-Intended-Recipient` header.
   It is a safety valve, not a stub — the send is real.
+- **No `temperature` on the model call.** `claude-opus-5` does not accept one and the
+  SDK drops it with a warning. It was set to 0.2 and silently doing nothing; removing it
+  changed no behaviour, it just stopped the source implying a guarantee the run never had.
+- **Phase-2 latency is recorded separately and is ~10x smaller.** That is the point, not
+  an anomaly: `runPipeline` makes no model calls. If the two ever converge, something has
+  started consulting the model during execution.
+- **`estimatedCostUsd` is usually absent.** Cost is only computed when
+  `KEEL_PRICE_INPUT_PER_MTOK` and `KEEL_PRICE_OUTPUT_PER_MTOK` are both set. Tokens and
+  latency are measured; a price is not, so it is not invented.
 - **Ephemeral state when hosted.** `lib/paths.ts` falls back to `/tmp` on serverless,
   where a cold start forgets the ledger. The console says so on screen.
 

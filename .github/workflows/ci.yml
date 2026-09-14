@@ -29,7 +29,7 @@ jobs:
       # The suite runs in fixture mode: the third-party network boundary is
       # stubbed, so no API keys are needed, but every Keel gate — policy,
       # idempotency, retry, read-back verification, ledger — executes for real.
-      # All 14 cases must pass, including the 5 that assert Keel does nothing.
+      # All 18 cases must pass, including the 5 that assert Keel does nothing.
       - name: Reliability suite
         run: pnpm eval
 
