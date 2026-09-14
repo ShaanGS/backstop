@@ -144,8 +144,8 @@ async function main() {
 
   const verdict =
     reachable >= 3
-      ? green(`${reachable} of 5 apps reachable — the hackathon minimum is 3.`)
-      : red(`${reachable} of 5 apps reachable — Keel needs at least 3.`);
+      ? green(`${reachable} of 5 apps reachable.`)
+      : red(`${reachable} of 5 apps reachable — Keel needs Stripe and Linear at minimum.`);
   console.log(`\n  ${verdict}${configured > reachable ? dim(` (${configured - reachable} configured but failing)`) : ""}\n`);
   process.exit(reachable >= 3 ? 0 : 1);
 }

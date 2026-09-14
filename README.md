@@ -13,8 +13,6 @@
 [![license](https://img.shields.io/badge/license-MIT-9a9ea6?labelColor=1c1c1f)](LICENSE)
 [![live](https://img.shields.io/badge/live-keel--nine--flame.vercel.app-16171a?labelColor=1c1c1f)](https://keel-nine-flame.vercel.app)
 
-Built for the [Multi-App AI Agent Hackathon](https://multiappagenthackathon.com) · Lemma AI × Comma Capital
-
 **[Live app](https://keel-nine-flame.vercel.app)**  ·  **[▶ Demo video (2 min)](https://drive.google.com/file/d/1GM7cbdqAG-AqoLbLXqLp79fPPZdnH1D5/view?usp=sharing)**  ·  [Reliability report](evals/REPORT.md)  ·  [Architecture](#architecture)  ·  [How it was verified](#how-i-tested-and-verified-it-works)  ·  [video mirror](docs/demo.mp4)
 
 </div>
@@ -272,7 +270,7 @@ One read-only call per connector. It distinguishes the failures that look
 identical from the outside — a rejected token, a bot that was never invited to the
 channel, a Notion page shared with the workspace but not with the integration — and
 prints the fix. No secret is ever printed. It exits non-zero below three reachable
-apps, which is the hackathon's minimum.
+apps.
 
 ### Hosted
 

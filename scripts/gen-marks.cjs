@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-require-imports -- build script, CommonJS by design */
 const si = require("simple-icons");
 const fs = require("fs");
+const path = require("path");
 
 const brands = [
   ["stripe", "siStripe", "Stripe", "#635BFF"],
@@ -35,5 +36,5 @@ export const BRANDS: Record<string, BrandSpec> = {
 ${entries}
 };
 `;
-fs.writeFileSync("/Users/shaangurushankar/Lemma Hackathon/backstop/components/brand-marks.ts", out);
+fs.writeFileSync(path.join(__dirname, "..", "components", "brand-marks.ts"), out);
 console.log("wrote components/brand-marks.ts");

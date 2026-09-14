@@ -290,7 +290,7 @@ export default function Landing() {
             <div>
               <Wordmark />
               <p className="mt-3 max-w-[300px] text-[13px] leading-[1.6] text-ink-2">
-                An autonomous revenue-retention agent, built for the Multi-App AI Agent Hackathon.
+                An autonomous revenue-retention agent. It finds why a customer is leaving, acts on it, and proves every action.
               </p>
             </div>
             <div>
