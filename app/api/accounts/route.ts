@@ -39,6 +39,10 @@ export async function GET(req: Request) {
           failedPaymentCents: r.value.billing.failedPaymentCents ?? null,
           usage: r.value.usage,
           tickets: r.value.tickets,
+          /* The dashboard's whole claim is that it explains the decline, so the
+             computed cause has to reach it. buildSnapshot already works this
+             out; the route used to drop it on the floor. */
+          diagnosis: r.value.diagnosis,
           evidence: r.value.evidence,
         }]
       : [],

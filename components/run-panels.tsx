@@ -112,6 +112,16 @@ export type AccountRow = {
   riskScore: number; riskReasons: string[]; mrrCents: number;
   daysToRenewal: number; failedPaymentCents: number | null;
   usage: { changePct: number; series: number[] };
+  diagnosis?: {
+    onset: { dropPct: number; weeks: number; daysAgo: number } | null;
+    causes: {
+      ticket: { identifier: string; title: string };
+      verdict: "likely" | "possible" | "ruled_out";
+      confidence: number;
+      leadDays: number;
+    }[];
+    summary: string;
+  };
 };
 
 

@@ -42,7 +42,64 @@ function Kpi({
 }
 
 /** Donut with a 2px surface gap between segments, per mark specs. */
-function HealthDonut({ counts, total }: { counts: { key: string; label: string; n: number; color: string }[]; total: number }) {
+/**
+ * Portfolio seat trend, eight weeks.
+ *
+ * The donut answers "how many accounts are in trouble right now". It cannot
+ * answer "is this getting worse", which is the question an operator actually
+ * opens a retention tool to ask. One line, one series, so the heading names it
+ * and no legend is needed.
+ */
+function SeatTrend({ series }: { series: number[] }) {
+  if (series.length < 2) return null;
+
+  const W = 240, H = 40, PAD = 2;
+  const min = Math.min(...series), max = Math.max(...series);
+  const span = max - min || 1;
+  const x = (i: number) => (i / (series.length - 1)) * (W - PAD * 2) + PAD;
+  const y = (v: number) => H - PAD - ((v - min) / span) * (H - PAD * 2);
+
+  const line = series.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  const area = `${line} L${x(series.length - 1).toFixed(1)},${H} L${x(0).toFixed(1)},${H} Z`;
+
+  const first = series[0], last = series[series.length - 1];
+  const changePct = first ? Math.round(((last - first) / first) * 1000) / 10 : 0;
+  const falling = changePct < 0;
+  const stroke = falling ? "var(--chart-risk)" : "var(--chart-healthy)";
+
+  return (
+    <div className="mt-3 border-t border-line pt-3">
+      <div className="flex items-baseline justify-between">
+        <p className="text-[11px] font-medium tracking-[0.04em] text-ink-2 uppercase">Seats in use</p>
+        <p className="font-mono text-[11.5px] tabular-nums" style={{ color: stroke }}>
+          {changePct > 0 ? "+" : ""}{changePct}%
+        </p>
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="none"
+        role="img" aria-label={`Weekly active seats across all accounts, eight weeks, ${changePct}%`}
+        className="mt-1.5 overflow-visible">
+        <defs>
+          <linearGradient id="seatfill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={stroke} stopOpacity="0.16" />
+            <stop offset="100%" stopColor={stroke} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path d={area} fill="url(#seatfill)" />
+        <path d={line} fill="none" stroke={stroke} strokeWidth={2}
+          strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+        <circle cx={x(series.length - 1)} cy={y(last)} r={3} fill={stroke} />
+      </svg>
+      <p className="mt-1 text-[11px] text-ink-3">
+        {series.reduce((s, v) => s + v, 0) ? `${last.toLocaleString(DATE_LOCALE)} this week, from ${first.toLocaleString(DATE_LOCALE)} eight weeks ago` : "No usage recorded"}
+      </p>
+    </div>
+  );
+}
+
+function HealthDonut({ counts, total }: {
+  counts: { key: string; label: string; n: number; color: string; mrrCents: number }[];
+  total: number;
+}) {
   const [hover, setHover] = useState<string | null>(null);
   const R = 54, SW = 13, C = 2 * Math.PI * R;
   const GAP = 2.5;
@@ -63,7 +120,7 @@ function HealthDonut({ counts, total }: { counts: { key: string; label: string; 
   const active = counts.find((c) => c.key === hover);
 
   return (
-    <div className="flex items-center gap-5">
+    <div className="flex flex-col items-center gap-4 sm:flex-row sm:gap-5">
       <div className="relative shrink-0">
         <svg width="136" height="136" viewBox="0 0 136 136" role="img" aria-label="Customer health by risk band">
           <g transform="translate(68,68) rotate(-90)">
@@ -90,11 +147,14 @@ function HealthDonut({ counts, total }: { counts: { key: string; label: string; 
             {active ? active.n : total}
           </span>
           <span className="mt-1 text-[10.5px] text-ink-3">{active ? active.label : "customers"}</span>
+          {active && (
+            <span className="mt-0.5 font-mono text-[10.5px] text-ink-2 tabular-nums">{money(active.mrrCents)}/mo</span>
+          )}
         </div>
       </div>
 
       {/* Legend carries the identity, so the chart never relies on colour alone. */}
-      <ul className="flex min-w-0 flex-1 flex-col gap-1.5">
+      <ul className="flex w-full min-w-0 flex-1 flex-col gap-1.5">
         {counts.map((c) => (
           <li
             key={c.key}
@@ -106,8 +166,8 @@ function HealthDonut({ counts, total }: { counts: { key: string; label: string; 
             <span className="size-2 shrink-0 rounded-full" style={{ background: c.color }} />
             <span className="min-w-0 flex-1 truncate text-[12.5px] text-ink-2">{c.label}</span>
             <span className="font-mono text-[12px] text-ink tabular-nums">{c.n}</span>
-            <span className="w-9 text-right font-mono text-[11px] text-ink-3 tabular-nums">
-              {total ? Math.round((c.n / total) * 100) : 0}%
+            <span className="shrink-0 text-right font-mono text-[11px] whitespace-nowrap text-ink-3 tabular-nums">
+              {money(c.mrrCents)}/mo
             </span>
           </li>
         ))}
@@ -158,16 +218,36 @@ export default function Home({
   onInvestigate: (a: AccountRow) => void;
 }) {
   const stats = useMemo(() => {
-    const counts = BANDS.map((b) => ({
-      key: b.key,
-      label: b.label,
-      color: b.color,
-      n: accounts.filter((a) => bandOf(a.riskScore).key === b.key).length,
-    }));
+    const counts = BANDS.map((b) => {
+      const inBand = accounts.filter((a) => bandOf(a.riskScore).key === b.key);
+      return {
+        key: b.key,
+        label: b.label,
+        color: b.color,
+        n: inBand.length,
+        /* Revenue, not share of headcount. Four healthy accounts worth $600 a
+           month and one shaky one worth $12k are not a 20% problem. */
+        mrrCents: inBand.reduce((s, a) => s + a.mrrCents, 0),
+      };
+    });
     const atRisk = accounts.filter((a) => a.riskScore >= 70);
     const revenueAtRisk = atRisk.reduce((s, a) => s + a.mrrCents, 0);
     const uncollected = accounts.reduce((s, a) => s + (a.failedPaymentCents ?? 0), 0);
-    return { counts, atRisk, revenueAtRisk, uncollected };
+    /* Sum each week across every account. Accounts report the same eight-week
+       cadence, so index i is the same week for all of them; a shorter series is
+       left-padded with its own first reading rather than dropped, which would
+       make the portfolio look like it grew. */
+    const weeks = Math.max(0, ...accounts.map((a) => a.usage.series.length));
+    const seatSeries = Array.from({ length: weeks }, (_, i) =>
+      accounts.reduce((sum, a) => {
+        const s = a.usage.series;
+        if (!s.length) return sum;
+        const offset = weeks - s.length;
+        return sum + (i < offset ? s[0] : s[i - offset]);
+      }, 0),
+    );
+
+    return { counts, atRisk, revenueAtRisk, uncollected, seatSeries };
   }, [accounts]);
 
   const signals = useMemo(
@@ -249,27 +329,61 @@ export default function Home({
       <div className="grid gap-3 lg:grid-cols-[1.15fr_1fr]">
         <Panel title="Customer health" sub="by computed risk score">
           <HealthDonut counts={stats.counts} total={accounts.length} />
+          <SeatTrend series={stats.seatSeries} />
         </Panel>
 
-        <Panel title="Needs a look" sub="highest risk first">
-          <ul className="flex flex-col gap-1">
+        <Panel title="Needs a look" sub="and what explains it">
+          <ul className="flex flex-col gap-0.5">
             {signals.map((a) => {
               const band = bandOf(a.riskScore);
+              const d = a.diagnosis;
+              const cause = d?.causes.find((c) => c.verdict === "likely");
+              const onset = d?.onset;
+
               return (
                 <li key={a.id}>
                   <button
                     type="button"
                     onClick={() => onInvestigate(a)}
-                    className="flex w-full items-center gap-2.5 rounded-[9px] px-1.5 py-1.5 text-left transition-colors hover:bg-hover-2"
+                    className="flex w-full items-start gap-2.5 rounded-[9px] px-1.5 py-2 text-left transition-colors hover:bg-hover-2"
                   >
-                    <span className="size-2 shrink-0 rounded-full" style={{ background: band.color }} />
+                    <span className="mt-[5px] size-2 shrink-0 rounded-full" style={{ background: band.color }} />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[12.5px] font-medium text-ink">{a.name}</span>
                       <span className="block truncate text-[11px] text-ink-3">
-                        {a.riskReasons[0] ?? "No open risk signals"}
+                        {onset
+                          ? `Seats down ${Math.abs(onset.dropPct)}% over ${onset.weeks} weeks`
+                          : (a.riskReasons[0] ?? "No open risk signals")}
                       </span>
+                      {/* The cause, which is the only thing here the sidebar
+                          doesn't already say. Two of the three states are the
+                          system declining to name one, and those are worth as
+                          much on screen as a confident answer. */}
+                      {d && onset && (
+                        <span className="mt-1 flex items-center gap-1.5">
+                          {cause ? (
+                            <>
+                              <span className="rounded-[4px] bg-inset px-1 py-px font-mono text-[10px] font-medium text-ink-2">
+                                {cause.ticket.identifier}
+                              </span>
+                              <span className="min-w-0 flex-1 truncate text-[11px] text-ink-2">
+                                {cause.ticket.title}
+                              </span>
+                              <span className="shrink-0 font-mono text-[10px] text-ink-3">
+                                {Math.round(cause.confidence * 100)}%
+                              </span>
+                            </>
+                          ) : (
+                            <span className="truncate text-[11px] text-ink-3 italic">
+                              {d.causes.length
+                                ? "No ticket explains the timing"
+                                : "Silent — nobody filed a ticket"}
+                            </span>
+                          )}
+                        </span>
+                      )}
                     </span>
-                    <span className="shrink-0 font-mono text-[11.5px] font-medium tabular-nums"
+                    <span className="mt-px shrink-0 font-mono text-[11.5px] font-medium tabular-nums"
                       style={{ color: band.color }}>
                       {a.riskScore}
                     </span>
