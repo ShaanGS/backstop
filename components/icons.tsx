@@ -1,15 +1,35 @@
-/** Connector marks and UI glyphs, inline so the app has no icon dependency. */
+/**
+ * Connector marks and UI glyphs, inline so the app has no icon dependency.
+ *
+ * Stroke is derived from size, never passed in.
+ *
+ * Every glyph draws in a fixed 24-unit viewBox and renders at `size` px, so a
+ * literal strokeWidth means a different weight on screen at every size: the app
+ * had 27 icons spread across fourteen values from 0.82px to 1.5px, a 1.8x
+ * range. An icon set reads as one set only when the on-screen weight is
+ * constant, so that is the number held fixed here and the SVG value is solved
+ * backwards from it.
+ *
+ * `weight` is the one deliberate exception: "strong" sits beside semibold text
+ * or carries state (a verified tick), where a hairline looks broken next to the
+ * heavier type.
+ */
+const VISUAL_STROKE = { regular: 1.25, strong: 1.6 } as const;
+
 export function Glyph({
   d,
   size = 15,
-  strokeWidth = 1.8,
+  weight = "regular",
   children,
 }: {
   d?: string;
   size?: number;
-  strokeWidth?: number;
+  weight?: keyof typeof VISUAL_STROKE;
   children?: React.ReactNode;
 }) {
+  /* Solve for the viewBox value that lands on the target painted width. */
+  const strokeWidth = (VISUAL_STROKE[weight] / size) * 24;
+
   return (
     <svg
       width={size}

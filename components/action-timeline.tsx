@@ -43,7 +43,7 @@ function Badge({ tone, icon }: { tone: "green" | "red" | "amber" | "ink"; icon: 
   return (
     <span className={cn("flex size-[22px] shrink-0 items-center justify-center rounded-full text-white", bg)}
       style={{ animation: "pop-in 300ms var(--ease-out) both" }}>
-      <Glyph d={icon} size={12} strokeWidth={3} />
+      <Glyph d={icon} size={12} />
     </span>
   );
 }
@@ -98,7 +98,7 @@ export default function ActionTimeline({ rows }: { rows: RowState[] }) {
                 </span>
               )}
               <span aria-hidden className="flex size-5 shrink-0 items-center justify-center text-ink-3">
-                <Glyph d={PATHS.chevron} size={14} strokeWidth={2.2} />
+                <Glyph d={PATHS.chevron} size={14} />
               </span>
             </button>
 
@@ -119,7 +119,7 @@ export default function ActionTimeline({ rows }: { rows: RowState[] }) {
                     {v && (
                       <div className="mt-0.5 flex items-start gap-2 rounded-[8px] bg-inset p-2">
                         <span className={cn("mt-px flex size-4 shrink-0 items-center justify-center rounded-full text-white", v.verified ? "bg-green" : "bg-red")}>
-                          <Glyph d={v.verified ? PATHS.check : PATHS.x} size={9} strokeWidth={3.5} />
+                          <Glyph d={v.verified ? PATHS.check : PATHS.x} size={9} weight="strong" />
                         </span>
                         <div className="min-w-0">
                           <p className="text-[11.5px] font-medium text-ink">

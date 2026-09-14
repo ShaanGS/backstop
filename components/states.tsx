@@ -48,7 +48,7 @@ export function ToolTrace({ calls }: { calls: { id: string; name: string; summar
           )}
           style={{ animation: `pop-in 240ms var(--ease-out) ${Math.min(i, 8) * 35}ms both` }}>
           {c.summary ? (
-            <span className="flex size-3 items-center justify-center text-green"><Glyph d={PATHS.check} size={9} strokeWidth={3.5} /></span>
+            <span className="flex size-3 items-center justify-center text-green"><Glyph d={PATHS.check} size={9} weight="strong" /></span>
           ) : (
             <span className="size-1.5 rounded-full bg-current" style={{ animation: "pulse-ring 1.2s ease-out infinite" }} />
           )}

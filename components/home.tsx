@@ -417,7 +417,7 @@ export default function Home({
                       refused
                     </span>
                   ) : e.verified ? (
-                    <span className="shrink-0 text-green"><Glyph d={PATHS.check} size={11} strokeWidth={3} /></span>
+                    <span className="shrink-0 text-green"><Glyph d={PATHS.check} size={11} weight="strong" /></span>
                   ) : null}
                   <span className="shrink-0 font-mono text-[10.5px] text-ink-3">{ago(e.ts)}</span>
                 </li>

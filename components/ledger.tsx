@@ -87,7 +87,7 @@ function Row({ e }: { e: LedgerEntry }) {
         {ok && e.verifyDetail ? (
           <span className="flex items-center gap-1 text-[11px] text-ink-3" title={e.summary}>
             <span className={cn("shrink-0", e.verified ? "text-green" : "text-amber")}>
-              <Glyph d={e.verified ? PATHS.check : PATHS.alert} size={9} strokeWidth={3} />
+              <Glyph d={e.verified ? PATHS.check : PATHS.alert} size={9} weight="strong" />
             </span>
             <span className="truncate">{e.verifyDetail}</span>
           </span>
@@ -105,7 +105,7 @@ function Row({ e }: { e: LedgerEntry }) {
           </span>
         )}
         <span className={cn("inline-flex h-5 items-center gap-1 rounded-full px-1.5 text-[10.5px] font-medium", pill.cls)}>
-          <Glyph d={pill.icon} size={9} strokeWidth={3} />
+          <Glyph d={pill.icon} size={9} />
           {pill.text}
         </span>
         {e.externalUrl && (
@@ -197,7 +197,7 @@ export default function Ledger({
       </div>
 
       <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-card bg-inset px-3 py-2 text-[11.5px] text-ink-2">
-        <span className="text-green"><Glyph d={PATHS.check} size={11} strokeWidth={3} /></span>
+        <span className="text-green"><Glyph d={PATHS.check} size={11} weight="strong" /></span>
         <span className="font-medium text-ink">
           {evals.passed}/{evals.total} reliability cases
         </span>

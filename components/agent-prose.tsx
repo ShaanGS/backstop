@@ -270,7 +270,7 @@ export default function AgentProse({
             </span>
             <span className="text-[11.5px] text-ink-2">{used.length} source{used.length === 1 ? "" : "s"}</span>
             <span className="text-ink-3 transition-transform duration-300" style={{ transform: open ? "rotate(180deg)" : "none" }}>
-              <Glyph d={PATHS.chevron} size={11} strokeWidth={2.4} />
+              <Glyph d={PATHS.chevron} size={11} />
             </span>
           </button>
 

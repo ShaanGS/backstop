@@ -166,7 +166,7 @@ export default function Composer({
             onClick={() => { setMenuOpen((o) => !o); inputRef.current?.focus(); }}
             className={cn("flex size-7 shrink-0 items-center justify-center rounded-[10px] text-ink-3 press transition-[background-color,color] duration-150 hover:bg-hover hover:text-ink disabled:opacity-40",
               menuOpen && "bg-hover text-ink")}>
-            <Glyph d="M12 5v14M5 12h14" size={16} strokeWidth={2} />
+            <Glyph d="M12 5v14M5 12h14" size={16} />
           </button>
           <span className="ml-auto hidden items-center gap-1 font-mono text-[10px] text-ink-3 sm:flex">
             <kbd className="rounded-[4px] bg-inset px-1 py-px shadow-hairline">@</kbd> account
@@ -175,7 +175,7 @@ export default function Composer({
           <button type="button" aria-label="Send" disabled={!canSend} onClick={send}
             className="ml-1 flex size-7 shrink-0 items-center justify-center rounded-[10px] press transition-[background-color,color] duration-150"
             style={{ background: canSend ? "var(--ink)" : "var(--line-strong)", color: canSend ? "var(--surface)" : "var(--ink-2)" }}>
-            <Glyph d="M12 19V5M5 12l7-7 7 7" size={15} strokeWidth={2.4} />
+            <Glyph d="M12 19V5M5 12l7-7 7 7" size={15} />
           </button>
         </div>
       </div>

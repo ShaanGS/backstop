@@ -48,6 +48,29 @@ const newTurn = (instruction: string): Turn => ({
   evidence: [], decisions: [], gate: null, rows: [], tally: null, error: null, startedAt: Date.now(), ms: 0,
 });
 
+/**
+ * One anatomy for every rail section: label, count, optional trailing control.
+ *
+ * The two sections were built separately and drifted — different wrappers,
+ * neither carrying a count, one with a trailing button bolted on. A count next
+ * to the label is the cheapest thing a sidebar can tell you, and it is the
+ * reason a rail reads as one system rather than two lists that happen to sit
+ * on top of each other.
+ */
+function RailHeading({
+  label, count, action,
+}: { label: string; count?: number; action?: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-1.5 px-1.5 pb-1">
+      <p className="text-[10px] font-semibold tracking-[0.06em] text-ink-3 uppercase">{label}</p>
+      {count !== undefined && (
+        <span className="font-mono text-[10px] text-ink-3 tabular-nums">{count}</span>
+      )}
+      {action && <span className="ml-auto flex items-center">{action}</span>}
+    </div>
+  );
+}
+
 export default function Console() {
   const [connectors, setConnectors] = useState<Connector[]>([]);
   const [modelReady, setModelReady] = useState(true);
@@ -238,21 +261,24 @@ export default function Console() {
         </div>
 
         <div className="px-3 pb-3">
-          <p className="px-1.5 pb-1 text-[10px] font-semibold tracking-[0.06em] text-ink-3 uppercase">Apps Keel can reach</p>
+          <RailHeading label="Apps Keel can reach" count={connectors.length || undefined} />
           {connectors.map((c) => <ConnectorRow key={c.id} c={c} />)}
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col px-3">
-          <div className="flex items-center px-1.5 pb-1">
-            <p className="text-[10px] font-semibold tracking-[0.06em] text-ink-3 uppercase">Your customers</p>
-            <button onClick={() => loadAccounts(true)} disabled={busy || refreshing}
-              aria-label="Refresh accounts" aria-busy={refreshing} data-press
-              className="ml-auto flex size-5 items-center justify-center rounded-[6px] text-ink-3 transition-colors hover:bg-hover hover:text-ink disabled:opacity-40">
-              <span className={refreshing ? "animate-[spin_900ms_linear_infinite]" : undefined}>
-                <Glyph d={PATHS.retry} size={11} />
-              </span>
-            </button>
-          </div>
+          <RailHeading
+            label="Your customers"
+            count={accounts.length || undefined}
+            action={
+              <button onClick={() => loadAccounts(true)} disabled={busy || refreshing}
+                aria-label="Refresh accounts" aria-busy={refreshing} data-press
+                className="flex size-5 items-center justify-center rounded-[6px] text-ink-3 transition-colors hover:bg-hover hover:text-ink disabled:opacity-40">
+                <span className={refreshing ? "animate-[spin_900ms_linear_infinite]" : undefined}>
+                  <Glyph d={PATHS.retry} size={11} />
+                </span>
+              </button>
+            }
+          />
           <div className="scroll-slim -mx-1 flex min-h-0 flex-1 flex-col overflow-y-auto px-1 pb-3">
             {ready === null && [0, 1, 2, 3, 4].map((i) => <AccountSkeleton key={i} i={i} />)}
             {ready === false && (
@@ -408,7 +434,7 @@ function TurnView({ t, onDecide, onReplay, isLast }: {
           <button type="button" data-press onClick={() => setShowTrace((v) => !v)} aria-expanded={showTrace}
             className="-ml-1 flex items-center gap-2 rounded-[7px] px-1 py-0.5 transition-colors duration-150 hover:bg-hover">
             <span className="flex size-3.5 items-center justify-center rounded-full bg-green-tint text-green">
-              <Glyph d={PATHS.check} size={8} strokeWidth={4} />
+              <Glyph d={PATHS.check} size={8} weight="strong" />
             </span>
             <span className="font-mono text-[11px] text-ink-2">
               {done} tool call{done === 1 ? "" : "s"}
@@ -416,7 +442,7 @@ function TurnView({ t, onDecide, onReplay, isLast }: {
               {t.ms > 0 && ` · ${(t.ms / 1000).toFixed(1)}s`}
             </span>
             <span className="text-ink-3 transition-transform duration-300" style={{ transform: showTrace ? "rotate(180deg)" : "none" }}>
-              <Glyph d={PATHS.chevron} size={11} strokeWidth={2.4} />
+              <Glyph d={PATHS.chevron} size={11} />
             </span>
           </button>
           <div className="grid transition-[grid-template-rows,opacity] duration-300"
@@ -468,7 +494,7 @@ function TurnView({ t, onDecide, onReplay, isLast }: {
               <span className="text-[10px] font-semibold tracking-[0.06em] text-ink uppercase">Agent reasoning</span>
               <span className="font-mono text-[10.5px] text-ink-3">cited</span>
               <span className="text-ink-3 transition-transform duration-300" style={{ transform: showProse ? "rotate(180deg)" : "none" }}>
-                <Glyph d={PATHS.chevron} size={11} strokeWidth={2.4} />
+                <Glyph d={PATHS.chevron} size={11} />
               </span>
             </button>
           )}
@@ -607,7 +633,7 @@ function Welcome({ connectors, modelReady, hint, onPick }: {
             className="group flex items-center gap-2.5 rounded-[10px] border border-line bg-surface px-3 py-2.5 text-left text-[13px] text-ink transition-colors duration-150 hover:bg-hover-2 disabled:opacity-40"
             style={{ animation: `fade-up 400ms var(--ease-out) ${120 + i * 70}ms both` }}>
             <span className="text-ink-3 transition-colors group-hover:text-accent-ink">
-              <Glyph d={PATHS.bolt} size={13} strokeWidth={2} />
+              <Glyph d={PATHS.bolt} size={13} />
             </span>
             <span className="min-w-0 flex-1">{s}</span>
             <span className="text-ink-3 opacity-0 transition-opacity group-hover:opacity-100">

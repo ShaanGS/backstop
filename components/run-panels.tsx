@@ -46,7 +46,7 @@ export function PolicyPanel({ decisions }: { decisions: PolicyDecision[] }) {
           <div key={d.rule + i} className="flex items-start gap-2.5 rounded-card bg-surface p-2.5 shadow-card"
             style={{ animation: `fade-up 340ms var(--ease-out) ${i * 60}ms both` }}>
             <span className={cn("mt-px flex size-5 shrink-0 items-center justify-center rounded-full", o.cls)}>
-              <Glyph d={o.icon} size={11} strokeWidth={2.6} />
+              <Glyph d={o.icon} size={11} weight="strong" />
             </span>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
@@ -77,7 +77,7 @@ export function ApprovalGate({
     <div className="rounded-card bg-surface p-3.5 shadow-raised" style={{ animation: "pop-in 280ms var(--ease-out) both" }}>
       <div className="flex items-center gap-2">
         <span className="flex size-6 items-center justify-center rounded-full bg-amber-tint text-amber">
-          <Glyph d={PATHS.pause} size={13} strokeWidth={2.4} />
+          <Glyph d={PATHS.pause} size={13} />
         </span>
         <p className="text-[13px] font-semibold text-ink">Waiting on a human</p>
         <span className="ml-auto font-mono text-[11px] text-ink-3">{rule}</span>

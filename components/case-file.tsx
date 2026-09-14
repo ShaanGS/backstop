@@ -33,7 +33,7 @@ export function RiskMeter({ score, reasons }: { score: number; reasons: string[]
         <span className="font-mono text-[12px] text-ink-3">/100</span>
         <span className={cn("ml-1 inline-flex h-5 items-center gap-1.5 rounded-full px-2 text-[11px] font-medium",
           score >= 70 ? "bg-red-tint text-red" : score >= 40 ? "bg-amber-tint text-amber" : "bg-green-tint text-green")}>
-          <Glyph d={score >= 70 ? PATHS.alert : PATHS.check} size={10} strokeWidth={2.6} />
+          <Glyph d={score >= 70 ? PATHS.alert : PATHS.check} size={10} weight="strong" />
           {b.label}
         </span>
       </div>
@@ -410,7 +410,7 @@ export function Receipts({ actions, seconds }: { actions: ExecutedAction[]; seco
       <div className="flex items-center gap-2.5 px-3.5 py-3">
         <span className={cn("flex size-6 shrink-0 items-center justify-center rounded-full",
           headline.cls === "text-green" ? "bg-green-tint" : headline.cls === "text-red" ? "bg-red-tint" : "bg-inset", headline.cls)}>
-          <Glyph d={headline.icon} size={12} strokeWidth={2.8} />
+          <Glyph d={headline.icon} size={12} weight="strong" />
         </span>
         <span className={cn("text-[19px] leading-none font-semibold tracking-[-0.02em] tabular-nums", headline.cls)}>{headline.n}</span>
         <span className="text-[12.5px] text-ink-2">{headline.label}</span>
@@ -449,7 +449,7 @@ export function Receipts({ actions, seconds }: { actions: ExecutedAction[]; seco
                 {ok ? (
                   <span className={cn("inline-flex h-5 shrink-0 items-center gap-1 rounded-full px-1.5 text-[10.5px] font-medium",
                     a.verification?.verified ? "bg-green-tint text-green" : "bg-amber-tint text-amber")}>
-                    <Glyph d={a.verification?.verified ? PATHS.check : PATHS.alert} size={9} strokeWidth={3} />
+                    <Glyph d={a.verification?.verified ? PATHS.check : PATHS.alert} size={9} weight="strong" />
                     {a.verification?.verified ? "Verified" : "Unverified"}
                   </span>
                 ) : (

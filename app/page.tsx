@@ -114,7 +114,7 @@ export default function Landing() {
             className="ml-5 inline-flex h-8 items-center gap-2 rounded-[8px] bg-ink px-3 text-[12.5px] font-medium text-canvas transition-opacity hover:opacity-90"
           >
             Open the console
-            <Glyph d={PATHS.arrow} size={12} strokeWidth={2.4} />
+            <Glyph d={PATHS.arrow} size={12} />
           </Link>
         </nav>
       </header>
@@ -147,7 +147,7 @@ export default function Landing() {
                 className="inline-flex h-11 items-center gap-2.5 bg-accent px-5 text-[13px] font-semibold tracking-[0.02em] text-white uppercase transition-opacity hover:opacity-90"
               >
                 Open the console
-                <Glyph d={PATHS.arrow} size={14} strokeWidth={2.4} />
+                <Glyph d={PATHS.arrow} size={14} />
               </Link>
               <a
                 href="https://github.com/ShaanGS/keel#how-i-tested-and-verified-it-works"
@@ -234,7 +234,7 @@ export default function Landing() {
           {FEATURES.map((f) => (
             <Bracketed key={f.title} className="p-6">
               <span className="flex size-9 items-center justify-center bg-accent text-white">
-                <Glyph d={f.icon} size={16} strokeWidth={2.2} />
+                <Glyph d={f.icon} size={16} />
               </span>
               <h3 className="mt-5 text-[16px] font-semibold tracking-[-0.01em] text-ink">{f.title}</h3>
               <p className="mt-2 text-[13.5px] leading-[1.6] text-ink-2">{f.body}</p>
@@ -263,7 +263,7 @@ export default function Landing() {
               className="mt-6 inline-flex items-center gap-2 text-[13.5px] font-medium text-accent"
             >
               Read the scorecard
-              <Glyph d={PATHS.arrow} size={13} strokeWidth={2.4} />
+              <Glyph d={PATHS.arrow} size={13} />
             </a>
           </div>
 
