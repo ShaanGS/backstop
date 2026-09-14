@@ -251,7 +251,7 @@ export default function Console() {
         <a href="https://github.com/ShaanGS/keel" target="_blank" rel="noreferrer"
           className="flex items-center gap-2 border-t border-line px-4 py-2.5 text-[11.5px] text-ink-3 transition-colors hover:text-ink">
           <Glyph d={PATHS.doc} size={12} />
-          <span className="animated-underline">14/14 reliability cases</span>
+          <span className="animated-underline">18/18 reliability cases</span>
           <span className="ml-auto text-green">✓</span>
         </a>
       </aside>

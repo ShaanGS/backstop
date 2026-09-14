@@ -8,7 +8,7 @@ a deterministic pipeline that can refuse.
 
 ```bash
 pnpm install
-pnpm eval        # 14/14 cases · 5/5 must-not-act · ~15s, no API keys
+pnpm eval        # 18/18 cases · 5/5 must-not-act · ~15s, no API keys
 pnpm typecheck
 pnpm lint
 pnpm build
@@ -48,7 +48,7 @@ the model emits can bypass them, which is also what makes the eval suite meaning
 | `lib/idempotency.ts` | `sha256(accountId + actionType + planId)` action ledger |
 | `lib/ledger.ts` | the audit trail read back as a durable record |
 | `lib/connectors/` | one module per app — read, write, and `verify*` |
-| `evals/` | 14 cases and the runner that drives the real pipeline |
+| `evals/` | 18 cases and the runner that drives the real pipeline |
 | `app/page.tsx` | product page · `app/console/` the operator console |
 
 ## Things that look like bugs and are not

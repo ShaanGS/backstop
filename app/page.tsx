@@ -251,7 +251,7 @@ export default function Landing() {
           <div>
             <Eyebrow>Reliability</Eyebrow>
             <h2 className="mt-5 text-[34px] leading-[1.1] font-semibold tracking-[-0.03em] text-ink sm:text-[42px]">
-              Five of the fourteen tests check that Keel does nothing
+              Five of the eighteen tests check that Keel does nothing
             </h2>
             <p className="mt-5 text-[14.5px] leading-[1.6] text-ink-2">
               Anyone can demonstrate an agent doing something. The harder claim is that it declines
@@ -269,7 +269,7 @@ export default function Landing() {
 
           <div className="grid gap-px border border-line bg-line sm:grid-cols-2">
             {[
-              { n: "14/14", l: "reliability cases pass", t: "text-green" },
+              { n: "18/18", l: "reliability cases pass", t: "text-green" },
               { n: "5", l: "assert it does nothing", t: "text-red" },
               { n: "100%", l: "of writes read back", t: "text-ink" },
               { n: "0", l: "duplicate actions on replay", t: "text-ink" },

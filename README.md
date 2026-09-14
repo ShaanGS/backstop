@@ -7,7 +7,7 @@
 **Your churn dashboard tells you a customer is at risk. It never tells you *why* — because the symptom and the cause are never in the same tool. Keel finds the why across five apps, acts on it, and proves every action by reading the app back.**
 
 [![reliability suite](https://github.com/ShaanGS/keel/actions/workflows/ci.yml/badge.svg)](https://github.com/ShaanGS/keel/actions/workflows/ci.yml)
-[![14/14 cases](https://img.shields.io/badge/reliability-14%2F14_cases-14804a?labelColor=1c1c1f)](evals/REPORT.md)
+[![14/14 cases](https://img.shields.io/badge/reliability-18%2F18_cases-14804a?labelColor=1c1c1f)](evals/REPORT.md)
 [![5 of them assert nothing happens](https://img.shields.io/badge/5-assert_it_does_nothing-c6303b?labelColor=1c1c1f)](evals/REPORT.md)
 [![5 external apps](https://img.shields.io/badge/external_apps-5-5a50e0?labelColor=1c1c1f)](#external-apps)
 [![license](https://img.shields.io/badge/license-MIT-9a9ea6?labelColor=1c1c1f)](LICENSE)
@@ -27,14 +27,14 @@ pnpm install && pnpm eval
 ```
 
 ```
-14/14 cases passed · 5/5 must-not-act cases passed
+18/18 cases passed · 5/5 must-not-act cases passed
 ```
 
 Fixture mode stubs **only** the third-party network boundary. Every Keel gate — policy,
 idempotency, retry, read-back verification, ledger — executes for real, which is why this runs
 in CI on every push with no credentials configured.
 
-Five of those fourteen assert that Keel does **nothing**: on a legal hold, inside a contact
+Five of those eighteen assert that Keel does **nothing**: on a legal hold, inside a contact
 cooldown, above an enterprise approval threshold, against an open escalation, and on a replay
 of work already done. [Full scorecard →](evals/REPORT.md)
 
@@ -303,7 +303,7 @@ KEEL_MODEL=claude-sonnet-5 pnpm dev
 
 Three layers, in increasing order of how much they prove.
 
-### 1. The reliability suite — 14 cases, `pnpm eval`
+### 1. The reliability suite — 18 cases, `pnpm eval`
 
 The suite drives the **real** `evaluatePolicy` and `executePlan` — the same functions the product
 runs — against pinned account states, and asserts on what actually happened. Every case checks six
@@ -330,7 +330,7 @@ plans that need no human, imminent renewal on a healthy account, documentation-o
 | `idempotent-rerun` | Replaying a completed plan ⇒ 0 executed, 3 skipped |
 
 ```
-  14/14 cases passed · 5/5 must-not-act cases passed
+  18/18 cases passed · 5/5 must-not-act cases passed
 ```
 
 Full generated scorecard: **[`evals/REPORT.md`](evals/REPORT.md)**.
@@ -432,7 +432,7 @@ lib/
   idempotency.ts  the action ledger
   audit.ts        append-only event log
   store.ts        account registry, usage telemetry, snapshot assembly
-evals/            14 cases + the runner that drives the real pipeline
+evals/            18 cases + the runner that drives the real pipeline
 scripts/
   seed.ts         writes the demo tenancy into Stripe and Linear
   preflight.ts    one read-only call per app — proves each is reachable

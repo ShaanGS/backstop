@@ -50,6 +50,7 @@ export type SnapshotDTO = {
   usage: AccountSnapshot["usage"];
   tickets: AccountSnapshot["tickets"];
   tags: string[];
+  diagnosis: AccountSnapshot["diagnosis"];
   evidence: AccountSnapshot["evidence"];
 };
 
@@ -69,6 +70,7 @@ function toDTO(s: AccountSnapshot): SnapshotDTO {
     usage: s.usage,
     tickets: s.tickets,
     tags: s.account.tags,
+    diagnosis: s.diagnosis,
     evidence: s.evidence,
   };
 }

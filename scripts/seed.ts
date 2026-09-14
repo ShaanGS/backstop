@@ -167,16 +167,27 @@ async function seedLinear(map: SeedMap) {
     const ids: string[] = [];
     for (const ticket of acc.tickets ?? []) {
       const title = `[${acc.name}] ${ticket.title}`;
+      /* Keel reads the report date back out of this body, because a seeded
+         tenancy is all created at seed time. It therefore has to be
+         reconciled, not merely skipped — otherwise changing ageDays in the
+         fixture silently leaves the external tenancy on the old timeline. */
+      const body = `Reported by ${acc.contact.name} (${acc.contact.role}) at ${acc.name}.\n\nOpened ${ticket.ageDays} days ago. Seeded by Keel.`;
       const found = await linear.issues({ filter: { title: { eq: title } }, first: 1 });
       if (found.nodes.length) {
-        ids.push(found.nodes[0].id);
-        log("=", `Linear ${found.nodes[0].identifier} — ${title} (reused)`);
+        const existing = found.nodes[0];
+        ids.push(existing.id);
+        if (existing.description !== body) {
+          await linear.updateIssue(existing.id, { description: body });
+          log("~", `Linear ${existing.identifier} — ${title} (report date reconciled)`);
+        } else {
+          log("=", `Linear ${existing.identifier} — ${title} (reused)`);
+        }
         continue;
       }
       const created = await linear.createIssue({
         teamId: team.id,
         title,
-        description: `Reported by ${acc.contact.name} (${acc.contact.role}) at ${acc.name}.\n\nOpened ${ticket.ageDays} days ago. Seeded by Keel for the multi-app agent demo.`,
+        description: body,
         priority: ticket.labels.includes("escalation") ? 1 : 2,
         labelIds: await Promise.all(ticket.labels.map(labelId)),
       });

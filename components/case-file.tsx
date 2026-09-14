@@ -77,7 +77,7 @@ export function StatTile({ label, value, sub, tone }: {
 
 const W = 640, H = 140, PAD = { t: 14, r: 74, b: 20, l: 8 };
 
-export function UsageChart({ series, baseline }: { series: number[]; baseline: number }) {
+export function UsageChart({ series, baseline, onsetIndex }: { series: number[]; baseline: number; onsetIndex?: number }) {
   const [hover, setHover] = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -93,6 +93,8 @@ export function UsageChart({ series, baseline }: { series: number[]; baseline: n
     return { pts, path, area, yBase: y(baseline), min, max };
   }, [series, baseline]);
 
+  /* The week the decline began, computed — not eyeballed off the curve. */
+  const onset = onsetIndex != null && onsetIndex >= 0 && onsetIndex < pts.length ? pts[onsetIndex] : null;
   const last = pts[pts.length - 1];
   const active = hover === null ? null : pts[hover];
   const down = series[series.length - 1] < baseline;
@@ -122,6 +124,20 @@ export function UsageChart({ series, baseline }: { series: number[]; baseline: n
             <stop offset="100%" stopColor={tone} stopOpacity="0" />
           </linearGradient>
         </defs>
+
+        {/* Where the sustained decline begins. Drawn from the computed onset so
+            the chart and the diagnosis can never disagree. */}
+        {onset && (
+          <g>
+            <line x1={onset.x} y1={PAD.t - 2} x2={onset.x} y2={H - PAD.b}
+              stroke="var(--red)" strokeWidth="1" strokeDasharray="2 3" opacity="0.55" />
+            <circle cx={onset.x} cy={onset.y} r="3.5" fill="var(--canvas)" stroke="var(--red)" strokeWidth="1.6" />
+            <text x={onset.x + 5} y={PAD.t + 6} className="fill-[var(--red)]"
+              style={{ fontSize: 9, fontFamily: "var(--font-mono)" }}>
+              decline starts
+            </text>
+          </g>
+        )}
 
         {/* baseline reference — recessive, dashed, directly labelled */}
         <line x1={PAD.l} y1={yBase} x2={W - PAD.r} y2={yBase}
@@ -274,15 +290,82 @@ export default function CaseFile({ s }: { s: SnapshotDTO }) {
 
       {/* the story */}
       <div className="px-4 pb-3">
-        <UsageChart series={s.usage.series} baseline={s.usage.baseline} />
+        <UsageChart series={s.usage.series} baseline={s.usage.baseline}
+          onsetIndex={s.diagnosis?.onset?.index} />
       </div>
 
       <div className="border-t border-line bg-canvas/40 p-3">
         <p className="mb-2 px-0.5 text-[10px] font-semibold tracking-[0.06em] text-ink-3 uppercase">
           Evidence · {s.evidence.length} facts from {new Set(s.evidence.map((e) => e.source)).size} sources
         </p>
+        <DiagnosisPanel d={s.diagnosis} />
+
         <EvidenceGroups items={s.evidence} />
       </div>
+    </div>
+  );
+}
+
+
+/* ── what caused it ───────────────────────────────────────────────────── */
+
+const VERDICT: Record<string, { label: string; cls: string }> = {
+  likely:    { label: "Likely cause",  cls: "bg-red-tint text-red" },
+  possible:  { label: "Possible",      cls: "bg-amber-tint text-amber" },
+  ruled_out: { label: "Ruled out",     cls: "bg-inset text-ink-3" },
+};
+
+/**
+ * The causal read. Ruled-out candidates are shown rather than hidden: knowing
+ * what did *not* cause the decline is what stops someone fixing the wrong thing.
+ */
+export function DiagnosisPanel({ d }: { d: SnapshotDTO["diagnosis"] }) {
+  if (!d?.onset && !d?.causes.length) return null;
+  const top = d.causes.find((c) => c.verdict === "likely");
+
+  return (
+    <div className="rounded-card bg-surface p-3.5 shadow-card"
+      style={{ animation: "fade-up 340ms cubic-bezier(0.23,1,0.32,1) both" }}>
+      <div className="flex items-baseline gap-2">
+        <p className="text-[11px] font-medium tracking-[0.04em] text-ink-3 uppercase">Diagnosis</p>
+        <p className="font-mono text-[10px] text-ink-3">computed, not inferred</p>
+      </div>
+
+      <p className="mt-1.5 text-[13px] leading-snug text-ink">{d.summary}</p>
+
+      {d.causes.length > 0 && (
+        <div className="mt-2.5 flex flex-col gap-1.5">
+          {d.causes.map((c) => {
+            const v = VERDICT[c.verdict] ?? VERDICT.possible;
+            const out = c.verdict === "ruled_out";
+            return (
+              <div key={c.ticket.identifier}
+                className={cn("flex items-start gap-2 rounded-[9px] px-2 py-1.5", out ? "bg-inset/60" : "bg-inset")}>
+                <span className={cn("mt-px inline-flex shrink-0 items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium", v.cls)}>
+                  {v.label}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className={cn("block truncate text-[12px]", out ? "text-ink-3 line-through decoration-ink-3/40" : "text-ink")}>
+                    {c.ticket.identifier} — {c.ticket.title}
+                  </span>
+                  <span className="block text-[11px] text-ink-3">{c.reason}</span>
+                </span>
+                {!out && (
+                  <span className="shrink-0 font-mono text-[10.5px] text-ink-3 tabular-nums">
+                    {Math.round(c.confidence * 100)}%
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {!top && d.causes.length > 0 && (
+        <p className="mt-2 text-[11.5px] leading-snug text-amber">
+          Nothing in the ticket queue explains the timing — the cause is somewhere else.
+        </p>
+      )}
     </div>
   );
 }
