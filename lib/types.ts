@@ -26,6 +26,10 @@ export type Ticket = {
   labels: string[];
   state: string;
   createdAt: string;
+  /** When the customer actually reported it. Seeded tenancies are all created
+   *  at seed time, so the intended report date is recovered from the issue
+   *  body; falls back to createdAt for tickets Keel did not seed. */
+  reportedAt?: string;
 };
 
 export type UsageSignal = {

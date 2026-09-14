@@ -24,6 +24,7 @@ import { join } from "node:path";
 import cases from "./cases.json";
 import { executePlan } from "../lib/execute";
 import { evaluatePolicy, requiresApproval } from "../lib/policy";
+import { diagnose } from "../lib/diagnose";
 import { resetLedger } from "../lib/idempotency";
 import { scoreRisk } from "../lib/store";
 import type { AccountSnapshot } from "../lib/store";
@@ -48,6 +49,7 @@ function buildSnapshot(c: Case): AccountSnapshot {
     labels: t.labels,
     state: t.state,
     createdAt: new Date(Date.now() - t.ageDays * 86_400_000).toISOString(),
+    reportedAt: new Date(Date.now() - t.ageDays * 86_400_000).toISOString(),
   }));
   const series = a.usage;
   const current = series[series.length - 1];
@@ -62,6 +64,7 @@ function buildSnapshot(c: Case): AccountSnapshot {
     failedPaymentCents: "failedPaymentCents" in a ? (a.failedPaymentCents as number) : undefined,
   };
   const { score, reasons } = scoreRisk(billing, usage, tickets);
+  const diagnosis = diagnose(usage, tickets);
   return {
     account: {
       id: `eval_${c.id}`,
@@ -77,7 +80,7 @@ function buildSnapshot(c: Case): AccountSnapshot {
           ? new Date(Date.now() - a.contactedDaysAgo * 86_400_000).toISOString()
           : undefined,
     },
-    billing, usage, tickets, riskScore: score, riskReasons: reasons,
+    billing, usage, tickets, riskScore: score, riskReasons: reasons, diagnosis,
     evidence: [],
   };
 }
@@ -113,6 +116,29 @@ async function runCase(c: Case) {
   const snapshot = buildSnapshot(c);
   const plan = buildPlan(c, snapshot);
   const failures: Failure[] = [];
+
+  // 0. The causal diagnosis, which the model is not allowed to override.
+  const dx = c.expect.diagnosis;
+  if (dx) {
+    const d = snapshot.diagnosis;
+    if (typeof dx.hasOnset === "boolean" && Boolean(d.onset) !== dx.hasOnset) {
+      failures.push({ check: "decline detected", expected: String(dx.hasOnset), got: String(Boolean(d.onset)) });
+    }
+    if (dx.topVerdict && d.causes[0]?.verdict !== dx.topVerdict) {
+      failures.push({ check: "top cause verdict", expected: dx.topVerdict, got: d.causes[0]?.verdict ?? "none" });
+    }
+    if (dx.topTicket && d.causes[0]?.ticket.identifier !== dx.topTicket) {
+      failures.push({ check: "top cause ticket", expected: dx.topTicket, got: d.causes[0]?.ticket.identifier ?? "none" });
+    }
+    // The point of the whole exercise: never name a cause the timing rules out.
+    if (dx.noLikelyCause && d.causes.some((x) => x.verdict === "likely")) {
+      failures.push({
+        check: "no cause asserted",
+        expected: "no 'likely' cause",
+        got: d.causes.filter((x) => x.verdict === "likely").map((x) => x.ticket.identifier).join(", "),
+      });
+    }
+  }
 
   // 1. Policy fires the rules we expect.
   const decisions = evaluatePolicy(snapshot, plan);

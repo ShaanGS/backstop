@@ -44,7 +44,7 @@ export function buildTools(
 
     get_account_snapshot: tool({
       description:
-        "Fetch the full risk picture for one account: live Stripe billing (MRR, renewal, failed payments), live Linear support tickets, product-usage telemetry, a deterministic risk score, and the evidence list behind it.",
+        "Fetch the full risk picture for one account: live Stripe billing (MRR, renewal, failed payments), live Linear support tickets, product-usage telemetry, a deterministic risk score, and a computed causal diagnosis — when the decline began and which open ticket could actually have caused it.",
       inputSchema: z.object({
         accountId: z.string().describe("Account id from list_accounts, e.g. acc_acme"),
       }),
@@ -81,10 +81,27 @@ export function buildTools(
             title: t.title,
             state: t.state,
             labels: t.labels,
-            ageDays: Math.round((Date.now() - Date.parse(t.createdAt)) / 86_400_000),
+            reportedDaysAgo: Math.round(
+              (Date.now() - Date.parse(t.reportedAt ?? t.createdAt)) / 86_400_000,
+            ),
           })),
           riskScore: s.riskScore,
           riskReasons: s.riskReasons,
+          /* Computed before you saw any of this. Report it; do not re-derive it,
+             and never assert a cause it ruled out. */
+          diagnosis: {
+            summary: s.diagnosis.summary,
+            declineBegan: s.diagnosis.onset
+              ? `${s.diagnosis.onset.daysAgo} days ago, seats ${s.diagnosis.onset.from} → ${s.diagnosis.onset.to} over ${s.diagnosis.onset.weeks} weeks (${s.diagnosis.onset.dropPct}%)`
+              : "no sustained decline",
+            candidateCauses: s.diagnosis.causes.map((c) => ({
+              ticket: c.ticket.identifier,
+              title: c.ticket.title,
+              verdict: c.verdict,
+              confidence: c.confidence,
+              why: c.reason,
+            })),
+          },
           // Cite these keys inline in your rationale, e.g. "[stripe-2]".
           citations: s.evidence.map((e) => ({ key: e.key, source: e.source, fact: `${e.label}: ${e.detail}` })),
         };

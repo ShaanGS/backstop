@@ -14,6 +14,7 @@ import { getBilling, customerUrl } from "./connectors/stripe";
 import { getTickets } from "./connectors/linear";
 import { isConfigured } from "./env";
 import { lastContactAt } from "./idempotency";
+import { diagnose, type Diagnosis } from "./diagnose";
 import { CUSTOMER_FACING } from "./policy";
 import type { Account, BillingSignal, Evidence, Ticket, UsageSignal } from "./types";
 
@@ -95,6 +96,9 @@ export type AccountSnapshot = {
   tickets: Ticket[];
   riskScore: number;
   riskReasons: string[];
+  /** Computed before the model sees anything: what the decline is, and which
+   *  open ticket could actually have caused it. */
+  diagnosis: Diagnosis;
   evidence: Evidence[];
 };
 
@@ -166,6 +170,8 @@ export async function buildSnapshot(accountId: string): Promise<AccountSnapshot>
   const { score, reasons } = scoreRisk(billing, usage, tickets);
 
   const ev = evidenceFactory(accountId);
+  const diagnosis = diagnose(usage, tickets);
+
   const evidence: Evidence[] = [
     ev({
       source: "stripe",
@@ -199,7 +205,11 @@ export async function buildSnapshot(accountId: string): Promise<AccountSnapshot>
     ...(account.tags.length
       ? [ev({ source: "linear", label: "Account tags", detail: account.tags.join(", ") })]
       : []),
+    ev({ source: "usage", label: "Causal diagnosis", detail: diagnosis.summary }),
   ];
 
-  return { account, billing, usage, tickets, riskScore: score, riskReasons: reasons, evidence };
+  return {
+    account, billing, usage, tickets,
+    riskScore: score, riskReasons: reasons, diagnosis, evidence,
+  };
 }

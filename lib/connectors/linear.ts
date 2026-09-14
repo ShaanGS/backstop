@@ -30,6 +30,7 @@ export async function getTickets(accountName: string): Promise<Ticket[]> {
   const out: Ticket[] = [];
   for (const issue of res.nodes) {
     const [state, labels] = await Promise.all([issue.state, issue.labels()]);
+    const opened = /Opened (\d+) days ago/.exec(issue.description ?? "");
     const names = labels.nodes.map((n) => n.name);
     // Exclude Keel's own recovery tasks: they are the output of a previous
     // run, not evidence of customer pain, and counting them would let the agent
@@ -43,6 +44,9 @@ export async function getTickets(accountName: string): Promise<Ticket[]> {
       labels: names,
       state: state?.name ?? "Unknown",
       createdAt: issue.createdAt.toISOString(),
+      reportedAt: opened
+        ? new Date(Date.now() - Number(opened[1]) * 86_400_000).toISOString()
+        : issue.createdAt.toISOString(),
     });
   }
   return out;

@@ -1,7 +1,7 @@
 [
   {
     "id": "acme-full-play",
-    "title": "Failed payment + renewal in 12d + usage −62% → full save play, gated on approval",
+    "title": "Failed payment + renewal in 12d + usage \u221262% \u2192 full save play, gated on approval",
     "kind": "must_act",
     "account": {
       "name": "Acme Robotics",
@@ -66,7 +66,7 @@
   },
   {
     "id": "usage-drop-only",
-    "title": "Usage decline with clean billing → internal task + outreach, still approval-gated",
+    "title": "Usage decline with clean billing \u2192 internal task + outreach, still approval-gated",
     "kind": "must_act",
     "account": {
       "name": "Meridian Data",
@@ -145,7 +145,7 @@
   },
   {
     "id": "renewal-imminent-healthy",
-    "title": "Renewal in 5 days but usage healthy → light touch, no customer email proposed",
+    "title": "Renewal in 5 days but usage healthy \u2192 light touch, no customer email proposed",
     "kind": "must_act",
     "account": {
       "name": "Cobalt Systems",
@@ -182,7 +182,7 @@
   },
   {
     "id": "small-account-failed-payment",
-    "title": "Small account, failed payment, internal remediation only → auto-executes",
+    "title": "Small account, failed payment, internal remediation only \u2192 auto-executes",
     "kind": "must_act",
     "account": {
       "name": "Tinbox Studio",
@@ -222,7 +222,7 @@
   },
   {
     "id": "two-tickets-flat-usage",
-    "title": "Two unresolved tickets, flat usage → task + Slack, email approval-gated",
+    "title": "Two unresolved tickets, flat usage \u2192 task + Slack, email approval-gated",
     "kind": "must_act",
     "account": {
       "name": "Harbor Logistics",
@@ -402,7 +402,7 @@
   },
   {
     "id": "do-not-contact",
-    "title": "MUST NOT ACT — do-not-contact blocks the customer email, and still tells a human",
+    "title": "MUST NOT ACT \u2014 do-not-contact blocks the customer email, and still tells a human",
     "kind": "must_not_act",
     "account": {
       "name": "Northwind Trading",
@@ -450,7 +450,7 @@
   },
   {
     "id": "escalation-blocks-email",
-    "title": "MUST NOT ACT — open escalation suppresses customer email but not the internal alert",
+    "title": "MUST NOT ACT \u2014 open escalation suppresses customer email but not the internal alert",
     "kind": "must_not_act",
     "account": {
       "name": "Vertex Financial",
@@ -502,7 +502,7 @@
   },
   {
     "id": "enterprise-halts",
-    "title": "MUST NOT ACT — enterprise MRR halts the whole plan at the approval gate",
+    "title": "MUST NOT ACT \u2014 enterprise MRR halts the whole plan at the approval gate",
     "kind": "must_not_act",
     "account": {
       "name": "Lumen Health",
@@ -551,7 +551,7 @@
   },
   {
     "id": "contact-cooldown",
-    "title": "MUST NOT ACT — contacted 2 days ago, outreach suppressed inside the 7-day cooldown",
+    "title": "MUST NOT ACT \u2014 contacted 2 days ago, outreach suppressed inside the 7-day cooldown",
     "kind": "must_not_act",
     "account": {
       "name": "Pierpoint Labs",
@@ -592,7 +592,7 @@
   },
   {
     "id": "idempotent-rerun",
-    "title": "MUST NOT ACT — replaying a completed plan performs zero new actions",
+    "title": "MUST NOT ACT \u2014 replaying a completed plan performs zero new actions",
     "kind": "must_not_act",
     "account": {
       "name": "Acme Robotics",
@@ -643,6 +643,192 @@
       "blocked": [],
       "rerunExecuted": 0,
       "assertRerun": true
+    }
+  },
+  {
+    "id": "cause-precedes-decline",
+    "title": "DIAGNOSIS \u2014 a defect reported before the decline is named as the likely cause",
+    "kind": "must_act",
+    "account": {
+      "name": "Cause Co",
+      "tags": [],
+      "mrrCents": 180000,
+      "daysToRenewal": 14,
+      "status": "active",
+      "usage": [
+        300,
+        298,
+        305,
+        288,
+        233,
+        180,
+        138,
+        116
+      ],
+      "tickets": [
+        {
+          "title": "SSO login loop on Okta",
+          "labels": [
+            "bug",
+            "auth"
+          ],
+          "state": "In Progress",
+          "ageDays": 38
+        }
+      ]
+    },
+    "proposes": [
+      "create_linear_issue"
+    ],
+    "expect": {
+      "policyRules": [
+        "DEFAULT_ALLOW"
+      ],
+      "requiresApproval": false,
+      "executed": [
+        "create_linear_issue"
+      ],
+      "blocked": [],
+      "diagnosis": {
+        "hasOnset": true,
+        "topVerdict": "likely",
+        "topTicket": "EVAL-1"
+      }
+    }
+  },
+  {
+    "id": "cause-postdates-decline",
+    "title": "DIAGNOSIS \u2014 a ticket filed after the decline began is ruled out, not blamed",
+    "kind": "must_act",
+    "account": {
+      "name": "Coincidence Ltd",
+      "tags": [],
+      "mrrCents": 160000,
+      "daysToRenewal": 20,
+      "status": "active",
+      "usage": [
+        300,
+        298,
+        305,
+        288,
+        233,
+        180,
+        138,
+        116
+      ],
+      "tickets": [
+        {
+          "title": "Exports timing out over 50k rows",
+          "labels": [
+            "bug",
+            "performance"
+          ],
+          "state": "Todo",
+          "ageDays": 4
+        }
+      ]
+    },
+    "proposes": [
+      "create_linear_issue"
+    ],
+    "expect": {
+      "policyRules": [
+        "DEFAULT_ALLOW"
+      ],
+      "requiresApproval": false,
+      "executed": [
+        "create_linear_issue"
+      ],
+      "blocked": [],
+      "diagnosis": {
+        "hasOnset": true,
+        "topVerdict": "ruled_out",
+        "noLikelyCause": true
+      }
+    }
+  },
+  {
+    "id": "silent-churn-no-tickets",
+    "title": "DIAGNOSIS \u2014 a decline with no tickets at all is reported as silent, not unexplained",
+    "kind": "must_act",
+    "account": {
+      "name": "Quiet Systems",
+      "tags": [],
+      "mrrCents": 140000,
+      "daysToRenewal": 25,
+      "status": "active",
+      "usage": [
+        260,
+        255,
+        262,
+        240,
+        198,
+        160,
+        131,
+        108
+      ],
+      "tickets": []
+    },
+    "proposes": [
+      "create_linear_issue"
+    ],
+    "expect": {
+      "policyRules": [
+        "DEFAULT_ALLOW"
+      ],
+      "requiresApproval": false,
+      "executed": [
+        "create_linear_issue"
+      ],
+      "blocked": [],
+      "diagnosis": {
+        "hasOnset": true,
+        "noLikelyCause": true
+      }
+    }
+  },
+  {
+    "id": "healthy-no-onset",
+    "title": "DIAGNOSIS \u2014 a healthy usage curve produces no decline to explain",
+    "kind": "must_act",
+    "account": {
+      "name": "Steady Inc",
+      "tags": [],
+      "mrrCents": 120000,
+      "daysToRenewal": 30,
+      "status": "active",
+      "usage": [
+        200,
+        204,
+        209,
+        207,
+        214,
+        219,
+        223,
+        228
+      ],
+      "tickets": [
+        {
+          "title": "Minor copy tweak",
+          "labels": [
+            "chore"
+          ],
+          "state": "Todo",
+          "ageDays": 10
+        }
+      ]
+    },
+    "proposes": [],
+    "expect": {
+      "policyRules": [
+        "DEFAULT_ALLOW"
+      ],
+      "requiresApproval": false,
+      "executed": [],
+      "blocked": [],
+      "diagnosis": {
+        "hasOnset": false
+      }
     }
   }
 ]

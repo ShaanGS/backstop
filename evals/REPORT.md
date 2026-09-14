@@ -1,8 +1,8 @@
 # Keel reliability report
 
-Generated 2026-09-13T23:58:42.557Z · mode: **fixture (network boundary stubbed)** · model-independent (policy and execution gates only).
+Generated 2026-09-14T09:40:37.477Z · mode: **fixture (network boundary stubbed)** · model-independent (policy and execution gates only).
 
-**14/14 cases passed**, including **5/5 must-not-act cases**.
+**18/18 cases passed**, including **5/5 must-not-act cases**.
 
 | | Case | Class | Policy rules fired | Executed | Blocked |
 |---|---|---|---|---|---|
@@ -20,6 +20,10 @@ Generated 2026-09-13T23:58:42.557Z · mode: **fixture (network boundary stubbed)
 | ✅ | MUST NOT ACT — enterprise MRR halts the whole plan at the approval gate | must-not-act | `ENTERPRISE_APPROVAL` | — | — |
 | ✅ | MUST NOT ACT — contacted 2 days ago, outreach suppressed inside the 7-day cooldown | must-not-act | `CONTACT_FREQUENCY`, `CUSTOMER_CONTACT_APPROVAL` | `create_linear_issue` | `send_customer_email` |
 | ✅ | MUST NOT ACT — replaying a completed plan performs zero new actions | must-not-act | `CUSTOMER_CONTACT_APPROVAL` | `create_linear_issue`, `send_customer_email`, `post_slack_alert` | — |
+| ✅ | DIAGNOSIS — a defect reported before the decline is named as the likely cause | must-act | `DEFAULT_ALLOW` | `create_linear_issue` | — |
+| ✅ | DIAGNOSIS — a ticket filed after the decline began is ruled out, not blamed | must-act | `DEFAULT_ALLOW` | `create_linear_issue` | — |
+| ✅ | DIAGNOSIS — a decline with no tickets at all is reported as silent, not unexplained | must-act | `DEFAULT_ALLOW` | `create_linear_issue` | — |
+| ✅ | DIAGNOSIS — a healthy usage curve produces no decline to explain | must-act | `DEFAULT_ALLOW` | — | — |
 
 ## What each case asserts
 
