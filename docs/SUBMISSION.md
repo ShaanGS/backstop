@@ -100,9 +100,13 @@ why this same command runs in CI on every push with no credentials configured.
 
 ---
 
-## Elevator pitch (200 char limit — this is 196)
+## Elevator pitch (Devpost field — 147 of 200 chars)
 
-Every churn tool tells you an account is at risk. None tell you why. Keel investigates across Stripe, Linear, Slack, Notion and Resend, finds the cause, acts on it, and proves every action landed.
+See why customers leave, before they do. Keel finds the cause across billing, support and usage, runs the recovery play, and verifies every action.
+
+## Tagline (banner, README, video open — not the Devpost field)
+
+Catch churn at the cause.
 
 ---
 
