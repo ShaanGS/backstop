@@ -1,6 +1,6 @@
 # Keel reliability report
 
-Generated 2026-09-14T10:54:18.919Z · mode: **fixture (network boundary stubbed)** · model-independent (policy and execution gates only).
+Generated 2026-09-14T11:04:04.365Z · mode: **fixture (network boundary stubbed)** · model-independent (policy and execution gates only).
 
 **18/18 cases passed**, including **5/5 must-not-act cases**.
 

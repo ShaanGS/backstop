@@ -7,7 +7,7 @@
 **Your churn dashboard tells you a customer is at risk. It never tells you *why* — because the symptom and the cause are never in the same tool. Keel finds the why across five apps, acts on it, and proves every action by reading the app back.**
 
 [![reliability suite](https://github.com/ShaanGS/keel/actions/workflows/ci.yml/badge.svg)](https://github.com/ShaanGS/keel/actions/workflows/ci.yml)
-[![14/14 cases](https://img.shields.io/badge/reliability-18%2F18_cases-14804a?labelColor=1c1c1f)](evals/REPORT.md)
+[![18/18 cases](https://img.shields.io/badge/reliability-18%2F18_cases-14804a?labelColor=1c1c1f)](evals/REPORT.md)
 [![5 of them assert nothing happens](https://img.shields.io/badge/5-assert_it_does_nothing-c6303b?labelColor=1c1c1f)](evals/REPORT.md)
 [![5 external apps](https://img.shields.io/badge/external_apps-5-5a50e0?labelColor=1c1c1f)](#external-apps)
 [![license](https://img.shields.io/badge/license-MIT-9a9ea6?labelColor=1c1c1f)](LICENSE)
@@ -71,6 +71,54 @@ happen until the quarter is already lost.
 **Keel does that work.** Not a dashboard that tells you an account is at risk — an agent that
 investigates the account across five apps and then actually runs the recovery play.
 
+## Finding the *why* — the part nobody else does
+
+Every churn tool on the market can tell you an account is at risk. None of them tell you what
+went wrong, because the symptom and the cause are never in the same tool: the usage curve lives
+in your product analytics, the cause lives in a support ticket somebody filed six weeks ago.
+
+Keel's headline claim is that it closes that gap. A claim like that cannot rest on a language
+model noticing a coincidence in prose — so it is **computed**, in
+[`lib/diagnose.ts`](lib/diagnose.ts), in two deterministic steps:
+
+**1. Find when the decline actually began.** Not the biggest single weekly drop — the *onset* of
+the sustained downturn, found by walking back from the present while the series keeps falling.
+A drop needs two consecutive declining weeks and a ≥10% fall before it counts as a trend at all.
+
+**2. Score every open ticket on whether it could have caused that onset.** Two factors:
+
+| Factor | What it measures |
+|---|---|
+| **Temporal alignment** | A cause must *precede* its effect. Reported after the onset scores **0**. Reported 0-21 days before scores highest and decays; reported long before decays too — the account lived with it, so it explains *this* decline less well |
+| **Severity** | How capable that class of problem is of driving seats down. Auth/SSO/login and outages weight 1.0; performance 0.7; export/integration 0.6; cosmetic bugs 0.5 |
+
+`confidence = alignment × severity`. Above 0.5 is `likely`, above 0 is `possible`, and **zero
+alignment is `ruled_out`** — stated as a finding, not silently dropped:
+
+```
+MAR-5   likely      93%   reported 3d before the decline began; auth failures block all use
+MAR-6   ruled_out    0%   reported 30d after the decline began — cannot be the cause
+```
+
+**Being able to rule a cause out is the whole point.** MAR-6 is the newest, loudest, most
+recently-escalated ticket on the account — exactly what a human skimming the queue would blame,
+and exactly what an LLM asked to "find the cause" will confabulate. It postdates the decline by a
+month, so it is a symptom or a coincidence. Keel says so and sends the operator to MAR-5 instead.
+
+This is not hypothetical. **It is the bug that shipped.** For most of this project's life the
+agent blamed the wrong ticket in every single run, fluently and with citations, and no test caught
+it — which is why the diagnosis is computed now and why a [second eval layer](#and-a-second-layer-for-the-half-a-pipeline-test-cant-reach)
+reads the model's prose to confirm it never reinstates a ruled-out cause.
+
+The honest outcomes matter as much as the confident one. `diagnose()` returns exactly three
+verdicts, and two of them are admissions:
+
+- **A likely cause**, named and cited.
+- **"No open ticket explains the timing — the cause is not in the ticket queue."** Every candidate
+  postdates the onset. The system says it does not know, instead of picking the best of a bad set.
+- **"Silent churn — nobody complained."** A decline with no tickets at all, which is the most
+  dangerous account of the three and the one a ticket-driven process never surfaces.
+
 ## Why this is hard, and what most agents get wrong
 
 Anyone can wire an LLM to the Slack API. The reason agents like this do not run in production is
@@ -83,6 +131,29 @@ interesting question stops being "can it do the work" and becomes:
 - When it says it created the task — did it? Or did the API return 500 and the model narrate success?
 
 Keel's answer is an architecture, not a prompt.
+
+## Where the intelligence is
+
+The tagline above is *the model proposes, the runtime disposes* — which is a claim about
+**discipline**, not a claim that the model does little. It does the part that cannot be written
+as code:
+
+| The model does | Why code can't |
+|---|---|
+| **Chooses its own path.** Which accounts to open, which signals to chase, how deep to go, when it has seen enough | `stopWhen: stepCountIs(12)` is a ceiling, not a script. Nothing in the repo sequences these calls or branches on an account id. The grounding suite shows the divergence in its own output: on one account the agent names `MAR-5` as the cause, on another it reports that *no* ticket explains the timing — same code, same prompt, different conclusion |
+| **Reads unstructured prose.** Support tickets are English written by frustrated humans | `diagnose.ts` can score *timing* mechanically, but judging whether "SSO redirect loop on Okta" plausibly explains a seat decline is semantic. No regex reaches it |
+| **Synthesises across incompatible schemas.** A Stripe invoice, a Linear issue graph and a weekly seat timeseries share no keys and no vocabulary | Joining them into one account narrative is exactly the work that has no schema |
+| **Writes the artifacts.** The customer email, the save-plan document, the owner alert — specific to this account, this cause, this week | A template that mentioned the wrong root cause would be worse than sending nothing |
+| **Cites every claim** with a key that resolves to a real record | And this is *checked*: `pnpm eval:grounding` fails the run if a single citation is invented |
+
+What the model is deliberately **not** trusted with is the acting: policy, idempotency,
+execution and verification never consult it. That is not a limit on the intelligence — it is the
+reason the intelligence is allowed near a customer's inbox at all. An LLM can be wrong about
+judgment and recover; it cannot be allowed to be wrong about whether an email was already sent.
+
+Remove the model and there is no product. There is no rule set that reads a support queue and
+explains a usage cliff — that is the entire problem, and it is why this is an agent rather than a
+dashboard with a threshold alert.
 
 ## External apps
 
@@ -126,7 +197,7 @@ flowchart TB
 
     G ==>|"a Plan — not an action"| H
 
-    H["<b>Policy engine</b><br/>5 deterministic rules"] --> I{"Needs a<br/>human?"}
+    H["<b>Policy engine</b><br/>6 deterministic rules"] --> I{"Needs a<br/>human?"}
     I -->|yes| J["Approval gate<br/>plan-level"]
     I -->|no| K["<b>Idempotency ledger</b><br/>sha256 action key"]
     J -->|approved| K
