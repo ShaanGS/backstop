@@ -11,7 +11,8 @@
     "eval": "tsx evals/run.ts",
     "preflight": "tsx scripts/preflight.ts",
     "seed": "tsx scripts/seed.ts",
-    "clean": "tsx scripts/clean.ts"
+    "clean": "tsx scripts/clean.ts",
+    "eval:grounding": "tsx evals/grounding.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.53",
