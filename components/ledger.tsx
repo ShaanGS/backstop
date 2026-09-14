@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { BrandMark, Glyph, PATHS } from "./icons";
-import { cn } from "@/lib/utils";
+import { cn, DATE_LOCALE } from "@/lib/utils";
 import type { LedgerEntry, LedgerSummary, MetricsSummary } from "@/lib/ledger";
 import { formatMs, formatTokens } from "@/lib/telemetry";
 
@@ -46,7 +46,7 @@ function dayLabel(iso: string): string {
   const yest = new Date(today.getTime() - 86_400_000).toDateString() === d.toDateString();
   if (sameDay) return "Today";
   if (yest) return "Yesterday";
-  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return d.toLocaleDateString(DATE_LOCALE, { month: "short", day: "numeric" });
 }
 
 function Row({ e }: { e: LedgerEntry }) {
@@ -71,7 +71,7 @@ function Row({ e }: { e: LedgerEntry }) {
       )}
     >
       <span className="font-mono text-[10.5px] text-ink-3 tabular-nums">
-        {new Date(e.ts).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
+        {new Date(e.ts).toLocaleTimeString(DATE_LOCALE, { hour: "2-digit", minute: "2-digit" })}
       </span>
       <span className="flex size-[18px] items-center justify-center">
         <BrandMark id={e.app} size={13} />

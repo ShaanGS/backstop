@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { BrandMark, Glyph, PATHS } from "./icons";
-import { cn, money } from "@/lib/utils";
+import { cn, money, DATE_LOCALE } from "@/lib/utils";
 import type { AccountRow } from "./run-panels";
 import type { LedgerEntry, LedgerSummary } from "@/lib/ledger";
 
@@ -148,9 +148,11 @@ function ago(iso: string): string {
 }
 
 export default function Home({
-  accounts, ledger, connectors, onInvestigate,
+  accounts, ledger, connectors, onInvestigate, setupHint,
 }: {
   accounts: AccountRow[];
+  /** Set when no connector is credentialed — the reason, in the API's words. */
+  setupHint?: string | null;
   ledger: { entries: LedgerEntry[]; summary: LedgerSummary } | null;
   connectors: { id: string; name: string; role: string; configured: boolean }[];
   onInvestigate: (a: AccountRow) => void;
@@ -174,6 +176,12 @@ export default function Home({
   );
 
   const s = ledger?.summary;
+  /* Clock- and locale-dependent text is the classic hydration trap: the server
+     renders it in the server's timezone and locale, the browser re-renders it in
+     the user's, and React treats the difference as a failed hydration (#418).
+     The date is pinned to one locale so both sides agree. The greeting genuinely
+     cannot agree — it depends on the reader's wall clock — so it is marked as
+     intentionally divergent rather than silently mismatching. */
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
@@ -181,7 +189,7 @@ export default function Home({
     <div className="mx-auto flex w-full max-w-[860px] flex-col gap-3 px-1 py-1">
       <header className="mb-1 flex items-end gap-3">
         <div>
-          <h1 className="text-[21px] leading-tight font-semibold tracking-[-0.025em] text-ink">
+          <h1 suppressHydrationWarning className="text-[21px] leading-tight font-semibold tracking-[-0.025em] text-ink">
             {greeting}.
           </h1>
           <p className="mt-0.5 text-[13px] text-ink-2">
@@ -190,9 +198,28 @@ export default function Home({
           </p>
         </div>
         <p className="ml-auto font-mono text-[11.5px] text-ink-3">
-          {new Date().toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+          {new Date().toLocaleDateString(DATE_LOCALE, { month: "short", day: "numeric", year: "numeric" })}
         </p>
       </header>
+
+      {/* Someone who just cloned this has no credentials, so every figure below
+          is a zero. Saying why — and where to see it populated — is the
+          difference between "empty product" and "not set up yet". */}
+      {setupHint && (
+        <div className="rounded-card bg-surface px-4 py-3 shadow-card">
+          <p className="text-[13px] font-medium text-ink">Not connected yet</p>
+          <p className="mt-1 text-[12.5px] leading-snug text-ink-2">{setupHint}</p>
+          <p className="mt-2 text-[12.5px] leading-snug text-ink-2">
+            Every number below is zero because Keel has nothing to read — not because nothing is
+            wrong. To see it running against real data without setting anything up, open the{" "}
+            <a href="https://keel-nine-flame.vercel.app/console" target="_blank" rel="noreferrer"
+              className="font-medium text-accent-ink underline underline-offset-2">hosted demo</a>.
+          </p>
+          <p className="mt-2 text-[12px] leading-snug text-ink-3">
+            The reliability suite needs no credentials at all — <code className="font-mono text-[11.5px] text-ink-2">pnpm eval</code> runs all 18 cases on a fresh clone.
+          </p>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Kpi label="Customers" value={String(accounts.length)} sub="under watch" />

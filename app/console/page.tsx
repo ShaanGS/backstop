@@ -299,6 +299,7 @@ export default function Console() {
           <div className="scroll-slim min-h-0 flex-1 overflow-y-auto px-5 py-5">
             <Home
               accounts={accounts}
+              setupHint={ready === false ? hint : null}
               ledger={ledger}
               connectors={connectors}
               onInvestigate={(a) => {
