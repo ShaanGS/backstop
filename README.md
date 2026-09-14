@@ -38,6 +38,23 @@ Five of those eighteen assert that Keel does **nothing**: on a legal hold, insid
 cooldown, above an enterprise approval threshold, against an open escalation, and on a replay
 of work already done. [Full scorecard →](evals/REPORT.md)
 
+### And a second layer, for the half a pipeline test can't reach
+
+Those eighteen cases never read a word the model wrote — which is exactly where Keel's worst
+bug lived. `pnpm eval:grounding` runs the real agent and measures its prose against what was
+computed:
+
+| Check | Why it exists |
+|---|---|
+| Every citation key resolves | A key the model invents renders as a dead link and everything around it becomes unverifiable |
+| No ruled-out ticket is named as a cause | The failure that started this. Blaming a defect reported *after* the decline sends someone to fix the wrong thing |
+| A computed likely cause is actually reported | Finding the cause is worthless if the write-up omits it |
+| A suppressed account still gets a plan | If the model quietly skips a `do-not-contact` account, refusal stops being the policy engine's decision and nobody learns the account is in trouble |
+
+Deterministic on purpose. An LLM judge would be easier to write and much easier to fool; every
+assertion here is a measurable fact about the text. It needs `ANTHROPIC_API_KEY` and the read
+connectors, and it performs no writes — every plan is left unapproved.
+
 ## The problem
 
 Churn is rarely a surprise. It is a failed payment nobody chased, two support tickets that went

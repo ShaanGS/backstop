@@ -12,6 +12,9 @@ pnpm eval        # 18/18 cases · 5/5 must-not-act · ~15s, no API keys
 pnpm typecheck
 pnpm lint
 pnpm build
+
+# and, with ANTHROPIC_API_KEY plus the read connectors:
+pnpm eval:grounding   # 8 checks that the model's prose matches what was computed
 ```
 
 `pnpm eval` runs in fixture mode, which stubs **only** the third-party network
