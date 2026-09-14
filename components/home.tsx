@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { BrandMark, Glyph, PATHS } from "./icons";
 import { cn, money, DATE_LOCALE } from "@/lib/utils";
 import type { AccountRow } from "./run-panels";
@@ -182,8 +182,19 @@ export default function Home({
      The date is pinned to one locale so both sides agree. The greeting genuinely
      cannot agree — it depends on the reader's wall clock — so it is marked as
      intentionally divergent rather than silently mismatching. */
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  /* The reader's hour is a client-only value, so it is read the way React asks
+     for one. The server snapshot is null — the two passes are never compared,
+     which is what makes this hydration-safe — and the client snapshot is the
+     reader's own clock. Suppressing the warning instead would have left the
+     SERVER's greeting on screen: a reader in the evening told good morning,
+     because hydration alone never recomputes rendered text. */
+  const hour = useSyncExternalStore(
+    () => () => {},
+    () => new Date().getHours(),
+    () => null,
+  );
+  const greeting =
+    hour === null ? "Welcome" : hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   return (
     <div className="mx-auto flex w-full max-w-[860px] flex-col gap-3 px-1 py-1">
